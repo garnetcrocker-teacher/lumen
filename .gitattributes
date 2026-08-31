@@ -1,0 +1,7 @@
+# Keep line endings consistent in the repo (LF), regardless of who commits.
+# Python and pygame handle LF fine on Windows; this just stops noisy diffs.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.wav binary
+*.ogg binary

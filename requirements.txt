@@ -1,0 +1,8 @@
+# LUMEN - everything the project needs.
+# Install into a virtual environment (see SETUP.md):
+#     python -m pip install -r requirements.txt
+#
+# pygame-ce is the "community edition" of pygame. You still write `import pygame`.
+# We use it because it ships wheels for new Python versions much faster than
+# classic pygame does. Do NOT also install `pygame` - the two conflict.
+pygame-ce==2.5.8

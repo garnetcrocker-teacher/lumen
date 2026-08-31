@@ -1,0 +1,21 @@
+# virtual environment - never commit this, everyone builds their own
+.venv/
+venv/
+env/
+
+# python bytecode
+__pycache__/
+*.pyc
+
+# files the game generates at runtime
+diveplan.json
+divelog.txt
+catalog.csv
+*.save
+_smoke*.json
+
+# editor / OS junk
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
