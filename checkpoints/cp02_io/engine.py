@@ -292,6 +292,16 @@ def _draw_base_hud(screen, sub):
     draw_text(screen, depth_zone_name(sub.depth), (16, 94), size=13, color=(120, 140, 155))
 
 
+def draw_tick(screen, y, depth_m):
+    """Draw one depth marker: a short line at the right edge and a metre label.
+    Markers that land off the top or bottom of the window are skipped for you."""
+    if -24 <= y <= HEIGHT + 24:
+        pygame.draw.line(screen, (86, 116, 132), (WIDTH - 58, int(y)),
+                         (WIDTH - 22, int(y)), 1)
+        draw_text(screen, f"{depth_m} m", (WIDTH - 62, int(y) - 7), size=12,
+                  color=(118, 148, 163), anchor="topright")
+
+
 def draw_hull_status(screen, status):
     """Show your Module 3 hull check.  Pass the string 'OK', 'CAUTION' or 'BREACH'."""
     colors = {"OK": (90, 200, 150), "CAUTION": (230, 190, 90), "BREACH": (230, 90, 80)}

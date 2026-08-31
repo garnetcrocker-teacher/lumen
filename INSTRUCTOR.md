@@ -107,8 +107,8 @@ provided parts of `main.py` absorb everything the class hasn't reached yet.
 
 ## Status of this repo
 
-- [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD, dive-plan I/O
-- [x] `cp02_io`, `cp03_decisions` - complete (main + briefing + check + reference solution)
-- [ ] `cp04` - `cp12` - not built yet
+- [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD, dive-plan I/O, `draw_tick`
+- [x] `cp02_io`, `cp03_decisions`, `cp04_loops` - complete (main + briefing + check + reference solution)
+- [ ] `cp05` - `cp12` - not built yet
 - [ ] `solution/lumen_full.py` - the finished game for playtesting - not built yet
 - [ ] `tools/build_zips.py` - one-command per-checkpoint zip builder - not built yet
