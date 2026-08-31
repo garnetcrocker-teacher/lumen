@@ -121,4 +121,4 @@ step 4 didn't finish - turn the venv on and re-run
 | `ModuleNotFoundError: pygame` | wrong Python / venv off | Turn the venv on; confirm VS Code interpreter is `.venv` |
 | pip tries to "build wheel" then fails | your Python is too new/old for this pygame-ce | Use Python 3.10-3.13, or ask the instructor for an updated `requirements.txt` |
 | window opens then closes instantly | that's `check.py` or headless mode | run `python main.py` instead; press ESC to close the game window |
-| `.venv` folder got huge / synced to OneDrive | it's ~60 MB of libraries | it's fine to delete `.venv` and rebuild it any time; never commit it |
+| `.venv` folder got huge / synced to OneDrive | it's ~60 MB of libraries | it's fine to delete `.venv` and rebuild it any time |

@@ -14,6 +14,10 @@ catalog.csv
 *.save
 _smoke*.json
 
+# the solution/ scripts import the canonical engine.py via a sys.path shim,
+# so they never need a copy here - block a stray one from being committed
+solution/engine.py
+
 # editor / OS junk
 .vscode/
 .idea/

@@ -2,7 +2,15 @@
 INSTRUCTOR REFERENCE - a correct Checkpoint 2 main.py.
 Do not ship this to students. This is the "between the dashed lines" portion,
 shown in full context.
+
+Runs from anywhere - the two lines below put the repo root on the import path
+so `import engine` finds the one canonical engine.py. Student checkpoints don't
+need this; each of those folders has its own engine.py copy.
 """
+
+import pathlib
+import sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 import engine
 

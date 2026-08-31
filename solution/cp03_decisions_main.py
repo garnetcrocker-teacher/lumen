@@ -1,7 +1,14 @@
 """
 INSTRUCTOR REFERENCE - a correct Checkpoint 3 main.py (the three function bodies).
 Do not ship this to students.
+
+The two lines below put the repo root on the import path so `import engine`
+finds the one canonical engine.py, no matter where you run this from.
 """
+
+import pathlib
+import sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 import engine
 
