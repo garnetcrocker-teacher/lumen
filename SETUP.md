@@ -18,10 +18,10 @@ terminal it opens.
 1. Install the **Python** extension from Microsoft (Extensions sidebar, search
    "Python", Install) if you don't already have it.
 2. **File > Open Folder** and open the `lumen` project folder.
-3. Press `Ctrl+Shift+P`, type **Python: Create Environment**, press Enter, then:
+3. Press `Ctrl+Shift+P`, type **Python: Create Environment**, press Enter, then either just do the suggested quick option which should be using your latest Python version and any dependencies or go step by step by doing the below:
    - choose **Venv**
    - choose a Python 3.10+ interpreter when asked
-   - when it lists dependency files to install, tick **`requirements.txt`** and
+   - when it asks if you have dependencies, select that option and
      confirm. (This step only appears if `requirements.txt` is in the folder you
      opened - if you don't see it, that's fine, step 5 covers it.)
 4. Wait for the notification in the bottom-right to finish. VS Code has now made
@@ -68,8 +68,6 @@ light formatting - readable in any editor, but nicer when rendered:
 - **No VS Code:** paste the text into a free web viewer - [stackedit.io](https://stackedit.io)
   or [dillinger.io](https://dillinger.io) - or install a free reader like
   [MarkText](https://www.marktext.cc).
-- On GitHub, `.md` files render automatically - if a link is shared with you,
-  just read it in the browser.
 
 ---
 

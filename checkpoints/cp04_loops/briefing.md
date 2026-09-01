@@ -76,7 +76,8 @@ hold **DOWN** and watch the metre labels on the right slide past, and watch
 - `draw_depth_ticks()` calls `engine.draw_tick` once per marker, for depths
   `0, 100, 200, ... , 2000` in order
 
-Paste the check.py output into the Canvas submission.
+Submit your `main.py` to Canvas. (Run `check.py` first to see your score - the
+grader runs the same check on the file you turn in.)
 
 ---
 

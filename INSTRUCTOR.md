@@ -1,9 +1,21 @@
 # LUMEN - instructor guide
 
 A semester-long Pygame project for Intro to Python (Gaddis, *Starting Out with
-Python*). Students build one game across 12 checkpoints, one per module. Each
-checkpoint is self-contained, so a student who misses weeks can join at any
-later checkpoint with no penalty.
+Python*). Students build one game across 12 checkpoints, one per module.
+
+**Carry-forward model.** From cp03 on, each checkpoint's `main.py` contains a
+marked section for every earlier checkpoint plus the new week's blanks. Earlier
+sections ship pre-filled with a reference solution, so:
+
+- a student who did the earlier weeks pastes their own code in over the reference
+  (the point: by December the file is theirs, built piece by piece);
+- a student joining late still gets a runnable game and only has to do the
+  current section.
+
+`check.py` grades **only the current week's** work, so it doesn't matter whose
+version of the earlier code is in the file. Downside: every later checkpoint's
+`main.py` contains the earlier reference solutions - fine, since those weeks are
+already due, but don't post checkpoints ahead of schedule.
 
 ---
 
@@ -110,6 +122,12 @@ Before Module 5, students never write `def` - the `def` line is pre-written and
 they fill the body. Before Module 7 they never see a list literal in *their*
 region; before Module 9, no dict literal in their region. The engine and the
 provided parts of `main.py` absorb everything the class hasn't reached yet.
+
+Carried-over sections only ever use constructs from the module that first
+introduced them, so pasting last week's own code in is always within reach. The
+cp02 intake sits in an `if __name__ == "__main__":` block from cp03 on; that line
+is labelled "provided boilerplate, more on it later" and students just write the
+intake indented beneath it (one extra indent vs. how they wrote it in cp02).
 
 ---
 

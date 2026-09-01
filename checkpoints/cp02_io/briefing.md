@@ -70,7 +70,12 @@ After you close the little briefing window that pops up, you're done.
 - `ballast_kg` and `battery_pct` are saved as **floats** (`40.0`, `100.0`)
 - the printed briefing contains the pilot name, the depth, and the descent time `22.5`
 
-Paste the check.py output into the Canvas submission.
+Submit your `main.py` to Canvas. (Run `check.py` first to see your score - the
+grader runs the same check on the file you turn in.)
+
+**Keep your finished `main.py`.** Next week you'll carry this pre-dive intake
+forward into Checkpoint 3, so you can paste your own version in instead of the
+reference one.
 
 ---
 

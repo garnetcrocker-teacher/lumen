@@ -2,7 +2,7 @@
 
 All term you are building one game: **LUMEN**, where you pilot a research
 submersible down a black ocean trench, keep it alive, and catalog the glowing
-creatures you find. Each module you learn gets used in it.
+creatures you find. Each module we cover will have you apply concepts to this game.
 
 ---
 
@@ -27,6 +27,9 @@ Each checkpoint is a **Canvas assignment** with a `.zip` attached. Inside:
    ```
    Early checkpoints also say "fill in the function body, don't change the
    `def` line." Everything outside those spots is already written - leave it.
+   From Checkpoint 3 on there are also marked sections for *earlier* checkpoints;
+   those come pre-filled with a working reference version, and you're free to
+   paste your own code from that week in over it (see "carries forward" below).
 
 2. **`engine.py` is off-limits.** It runs the window and the game loop so you can
    focus on the week's concept. If a newer one is posted, replace the whole file.
@@ -43,18 +46,23 @@ Each checkpoint is a **Canvas assignment** with a `.zip` attached. Inside:
 
 ---
 
+## Your code carries forward
+
+From Checkpoint 3 on, each `main.py` has a marked section for **every earlier
+checkpoint's work**, not just the new one. Each of those older sections comes
+pre-filled with a working reference version so the game always runs - but if you
+did that checkpoint, paste **your own** code in over the reference. By the end of
+the term the file is full of code you wrote: you built the whole game, one piece
+at a time.
+
 ## Missed a week? Joining late?
 
-**You don't need any earlier checkpoint's files.** Every checkpoint's zip is
-complete and stands on its own. Anything from earlier modules that the game still
-needs is already taken care of - it's either inside `engine.py`, or already
-written into the parts of `main.py` you don't edit. If the first checkpoint you
-ever open is Checkpoint 6, download the Checkpoint 6 zip, do the one-time setup,
-and start there.
-
-Each checkpoint's `main.py` is a fresh copy - you don't paste in your code from
-previous weeks. Your finished checkpoints stay in their own folders as a record
-of what you built.
+**You don't need any earlier checkpoint's files to start.** Because every older
+section already has a working reference version, you can pick up at any
+checkpoint. If the first one you ever open is Checkpoint 6, download the
+Checkpoint 6 zip, do the one-time setup, and work on the new section - the
+earlier parts already run. (You just won't have your own code in the older
+sections, which is fine.)
 
 ---
 
@@ -62,7 +70,7 @@ of what you built.
 
 Follow **`SETUP.md`**. The short version, if you use VS Code: open the `lumen`
 folder, then `Ctrl+Shift+P` > **Python: Create Environment** > *Venv* > pick a
-Python 3.10+ > tick `requirements.txt`. After that the Run button and any new
+Python 3.10+ > tick to select dependencies. After that the Run button and any new
 terminal just work - you never "activate" anything.
 
 Then, to work on a checkpoint: open its folder, run `python main.py` to play it
@@ -76,4 +84,4 @@ and `python check.py` to grade it.
   answers the thing you're stuck on. (To see it formatted: open it in VS Code and
   press `Ctrl+Shift+V`. More options in `SETUP.md`.)
 - A `[FAIL]` line tells you the exact call that went wrong and what it expected.
-- Bring the `check.py` output to office hours or post it on the discussion board.
+- Reach out with questions! This is my first time making and using these assignments, so there will probably be some bumps along the way.

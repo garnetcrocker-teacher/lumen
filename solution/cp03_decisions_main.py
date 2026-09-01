@@ -12,8 +12,10 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 import engine
 
+DESCENT_RATE = 20.0
 
-# --- BEGIN YOUR CODE ---------------------------------------------------------
+
+# --- BEGIN YOUR CODE (Checkpoint 3) ----------------------------------------
 
 def hull_status(depth_m, rated_m):
     if depth_m < rated_m:
@@ -56,4 +58,26 @@ def frame(sub, screen):
                      (16, engine.HEIGHT - 26), size=13, color=(120, 140, 155))
 
 
-engine.run(frame)
+# ============ Checkpoint 2 (carried over) - reference version ==============
+if __name__ == "__main__":
+    print("=" * 40)
+    print("        LUMEN  -  PRE-DIVE INTAKE")
+    print("=" * 40)
+    pilot = input("Pilot name: ")
+    target_depth = int(input("Target depth (m): "))
+    ballast_kg = float(input("Ballast (kg): "))
+    battery_pct = float(input("Battery (%): "))
+    descent_seconds = target_depth / DESCENT_RATE
+
+    print()
+    print("--- DIVE PLAN ---")
+    print("Pilot:         ", pilot)
+    print("Target depth:  ", target_depth, "m")
+    print("Ballast:       ", ballast_kg, "kg")
+    print("Battery:       ", battery_pct, "%")
+    print(f"Descent time:   {descent_seconds:.1f} s")
+
+    engine.save_diveplan(pilot, target_depth, ballast_kg, battery_pct)
+    # ============ end Checkpoint 2 ============
+
+    engine.run(frame)
