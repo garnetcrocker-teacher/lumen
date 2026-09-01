@@ -124,7 +124,8 @@ class Submarine:
         self.ballast = _as_float(plan.get("ballast_kg"), 40.0)   # kg
         self.hull = 100.0                                   # integrity percent
         self.rated_depth = 1000.0                           # crush past here
-        self.dive_rate = 20.0                               # metres / second
+        # heavier ballast sinks faster: 40 kg -> the old default of 20 m/s
+        self.dive_rate = 8.0 + self.ballast * 0.3          # metres / second
         self.rise_rate = 24.0
         self.light_on = True
         self.light_radius = 155
@@ -284,12 +285,37 @@ def _bar(screen, label, value, x, y, good=(80, 200, 140), bad=(210, 90, 80)):
     pygame.draw.rect(screen, col, (x + 46, y + 2, int(120 * k), 10))
 
 
+def _draw_target_line(screen, sub):
+    """A dashed line across the water at the pilot's target depth, once it's
+    close enough to be on screen."""
+    y = world_y_to_screen(sub, sub.target_depth)
+    if not (-30 <= y <= HEIGHT + 30):
+        return
+    col = (90, 210, 150) if sub.depth >= sub.target_depth else (90, 175, 210)
+    for x in range(16, WIDTH - 16, 18):
+        pygame.draw.line(screen, col, (x, int(y)), (x + 9, int(y)), 2)
+    draw_text(screen, "TARGET DEPTH", (WIDTH // 2, int(y) - 16), size=12,
+              color=col, anchor="midtop")
+
+
 def _draw_base_hud(screen, sub):
     _bar(screen, "O2", sub.oxygen, 16, 14)
     _bar(screen, "PWR", sub.power, 16, 32)
     _bar(screen, "HULL", sub.hull, 16, 50)
     draw_text(screen, f"DEPTH {sub.depth:6.1f} m", (16, 74), size=16, color=(180, 205, 220))
     draw_text(screen, depth_zone_name(sub.depth), (16, 94), size=13, color=(120, 140, 155))
+
+    if sub.depth >= sub.target_depth:
+        draw_text(screen, f"TARGET {int(sub.target_depth)} m  -  REACHED",
+                  (16, 112), size=13, color=(90, 210, 150))
+    else:
+        draw_text(screen, f"TARGET {int(sub.target_depth)} m  "
+                  f"({sub.target_depth - sub.depth:.0f} m to go)",
+                  (16, 112), size=13, color=(120, 170, 190))
+    draw_text(screen, f"BALLAST {sub.ballast:.0f} kg  ->  DIVE {sub.dive_rate:.0f} m/s",
+              (16, 130), size=13, color=(120, 140, 155))
+    draw_text(screen, f"PILOT  {str(sub.pilot).upper()}", (WIDTH - 16, 14),
+              size=14, color=(150, 165, 178), anchor="topright")
 
 
 def draw_tick(screen, y, depth_m):
@@ -430,10 +456,12 @@ def run(frame_fn, setup_fn=None, title="LUMEN - a descent"):
         frame_fn(sub, screen)
         _draw_submarine(screen, sub)
         _draw_darkness(screen, sub)
+        _draw_target_line(screen, sub)
         _draw_base_hud(screen, sub)
         if not sub.alive:
             reason = "OXYGEN DEPLETED" if sub.oxygen <= 0 else "HULL BREACH"
-            draw_banner(screen, "LOST WITH ALL HANDS", reason)
+            draw_banner(screen, "LOST WITH ALL HANDS",
+                        f"{str(sub.pilot).upper()}  -  {reason}")
 
         pygame.display.flip()
 

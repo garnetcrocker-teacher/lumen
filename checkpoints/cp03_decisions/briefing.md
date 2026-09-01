@@ -50,13 +50,29 @@ Otherwise return `False`. Use the `and` keyword.
 
 ---
 
+## What your dive plan controls
+
+The four values from the Checkpoint 2 intake all feed into the dive. The engine
+shows them on the HUD as you play:
+
+| You entered | What it does in the game |
+|---|---|
+| **Pilot name** | shown top-right on the HUD - and on the sub's epitaph if you don't make it back |
+| **Target depth** | the mission goal: a "m to go" readout, and a dashed **TARGET DEPTH** line in the water once you're near it |
+| **Ballast (kg)** | sinking weight - more ballast means a faster dive (`DIVE __ m/s` on the HUD) |
+| **Battery (%)** | your starting `PWR` - runs the light and, via `can_descend`, decides when you can't go deeper |
+
+---
+
 ## Try it
 
-Run `python main.py`. It runs the pre-dive intake first - type a plan (try a low
-battery like `40`, and you'll see `PWR` start there). Then the window opens: hold
-**DOWN** to dive and watch the `HULL:` readout at the top center change from `OK`
-to `CAUTION` to `BREACH` as you pass 1000 m and 1500 m. Let the battery run down
-and confirm that once `PWR` hits 0 you can no longer descend.
+Run `python main.py`. Type a dive plan at the prompts - try **pilot** your name,
+**target depth** `900`, **ballast** `70`, **battery** `40`. When the window
+opens: your name is top-right, `BALLAST 70 kg -> DIVE ~29 m/s`, and `TARGET
+900 m (... m to go)`. Hold **DOWN** to dive - watch the `HULL:` readout go `OK`
+-> `CAUTION` -> `BREACH` past 1000 m and 1500 m, watch the TARGET line appear and
+turn green as you pass 900 m, and confirm that once `PWR` hits 0 you can no
+longer descend.
 
 ---
 

@@ -133,7 +133,7 @@ intake indented beneath it (one extra indent vs. how they wrote it in cp02).
 
 ## Status of this repo
 
-- [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD, dive-plan I/O, `draw_tick`
+- [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD (pilot / target-depth line / ballast->dive-rate / power), dive-plan I/O, `draw_tick`
 - [x] `cp02_io`, `cp03_decisions`, `cp04_loops` - complete (main + briefing + check + reference solution)
 - [ ] `cp05` - `cp12` - not built yet
 - [ ] `solution/lumen_full.py` - the finished game for playtesting - not built yet
