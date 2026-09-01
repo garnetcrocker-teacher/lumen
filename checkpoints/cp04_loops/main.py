@@ -13,8 +13,8 @@ Controls once it runs:  DOWN = dive,  UP = rise,  L = toggle light
 
 import engine
 
-METRES_PER_PERCENT = 20       # every 1 percent of battery is worth 20 m of descent
-TICK_STEP = 100               # draw a depth marker every this many metres
+METERS_PER_PERCENT = 20       # every 1 percent of battery is worth 20 m of descent
+TICK_STEP = 100               # draw a depth marker every this many meters
 TICK_MAX = 2000               # ... from 0 m down to this depth
 
 # --- BEGIN YOUR CODE ---------------------------------------------------------
@@ -34,11 +34,11 @@ def read_valid_depth():
 
 
 def max_safe_depth(start_power):
-    """Return how many whole metres the sub can descend before the battery dies.
+    """Return how many whole meters the sub can descend before the battery dies.
 
     Start at depth 0 with `start_power` percent of battery. Using a while loop,
     for as long as there is at least 1 whole percent of power left, spend
-    1 percent and go METRES_PER_PERCENT metres deeper. Return the depth
+    1 percent and go METERS_PER_PERCENT meters deeper. Return the depth
     reached, as an int.
 
     Examples:  max_safe_depth(100) -> 2000     max_safe_depth(1) -> 20
@@ -48,10 +48,10 @@ def max_safe_depth(start_power):
 
 
 def draw_depth_ticks(screen, sub):
-    """Draw a depth marker every TICK_STEP metres, from 0 m down to TICK_MAX.
+    """Draw a depth marker every TICK_STEP meters, from 0 m down to TICK_MAX.
 
     Use a for loop over range(0, TICK_MAX + 1, TICK_STEP). For each depth d:
-        y = engine.world_y_to_screen(sub, d)     # d in metres -> y in pixels
+        y = engine.world_y_to_screen(sub, d)     # d in meters -> y in pixels
         engine.draw_tick(screen, y, d)           # draws the line + label
     """
     pass

@@ -35,7 +35,7 @@ import pygame  # noqa: E402  - must come after the env vars above
 WIDTH, HEIGHT = 960, 600
 FPS = 60
 SUB_SCREEN_Y = int(HEIGHT * 0.42)      # the sub is pinned here; the world scrolls
-PIXELS_PER_METRE = 4.0
+PIXELS_PER_METER = 4.0
 
 SURFACE_COLOR = (14, 32, 48)
 DEEP_COLOR = (2, 4, 9)
@@ -116,7 +116,7 @@ def _as_float(value, fallback):
 class Submarine:
     def __init__(self, plan):
         self.pilot = plan.get("pilot", "Unknown")
-        self.depth = 0.0                                    # metres below surface
+        self.depth = 0.0                                    # meters below surface
         self.x = 0.0                                        # horizontal drift
         self.target_depth = _as_float(plan.get("target_depth"), 300)
         self.oxygen = 100.0                                 # percent
@@ -125,7 +125,7 @@ class Submarine:
         self.hull = 100.0                                   # integrity percent
         self.rated_depth = 1000.0                           # crush past here
         # heavier ballast sinks faster: 40 kg -> the old default of 20 m/s
-        self.dive_rate = 8.0 + self.ballast * 0.3          # metres / second
+        self.dive_rate = 8.0 + self.ballast * 0.3          # meters / second
         self.rise_rate = 24.0
         self.light_on = True
         self.light_radius = 155
@@ -194,8 +194,8 @@ def draw_glow(surface, pos, radius, color):
 
 
 def world_y_to_screen(sub, world_depth):
-    """Convert a depth in metres to a y pixel, given where the sub is now."""
-    return int(SUB_SCREEN_Y + (world_depth - sub.depth) * PIXELS_PER_METRE)
+    """Convert a depth in meters to a y pixel, given where the sub is now."""
+    return int(SUB_SCREEN_Y + (world_depth - sub.depth) * PIXELS_PER_METER)
 
 
 def depth_zone_name(depth):
@@ -211,10 +211,10 @@ def depth_zone_name(depth):
 
 # --- the pieces the engine always draws itself -----------------------------
 def _draw_background(screen, sub):
-    top_depth = sub.depth - SUB_SCREEN_Y / PIXELS_PER_METRE
+    top_depth = sub.depth - SUB_SCREEN_Y / PIXELS_PER_METER
     step = 6
     for band_y in range(0, HEIGHT, step):
-        d = top_depth + band_y / PIXELS_PER_METRE
+        d = top_depth + band_y / PIXELS_PER_METER
         k = max(0.0, min(1.0, d / 1400.0))
         col = (
             int(SURFACE_COLOR[0] + (DEEP_COLOR[0] - SURFACE_COLOR[0]) * k),
@@ -319,7 +319,7 @@ def _draw_base_hud(screen, sub):
 
 
 def draw_tick(screen, y, depth_m):
-    """Draw one depth marker: a short line at the right edge and a metre label.
+    """Draw one depth marker: a short line at the right edge and a meter label.
     Markers that land off the top or bottom of the window are skipped for you."""
     if -24 <= y <= HEIGHT + 24:
         pygame.draw.line(screen, (86, 116, 132), (WIDTH - 58, int(y)),
@@ -337,7 +337,7 @@ def draw_hull_status(screen, status):
 
 
 def draw_banner(screen, line1, line2=""):
-    """A centred two-line message (used for game over, checkpoints, etc.)."""
+    """A centered two-line message (used for game over, checkpoints, etc.)."""
     veil = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     veil.fill((0, 0, 6, 180))
     screen.blit(veil, (0, 0))

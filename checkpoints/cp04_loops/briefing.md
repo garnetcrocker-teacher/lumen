@@ -31,10 +31,10 @@ Open `main.py`. Fill in the three function bodies between `BEGIN YOUR CODE` and
 ### 2. `max_safe_depth(start_power)` - an accumulator `while` loop
 
 - Start at depth `0` with `start_power` percent of battery.
-- `METRES_PER_PERCENT` is already defined (`= 20`): every 1 percent of battery
+- `METERS_PER_PERCENT` is already defined (`= 20`): every 1 percent of battery
   buys 20 m of descent.
 - While there is at least 1 whole percent of power left (`power >= 1`):
-  subtract `1` from power, add `METRES_PER_PERCENT` to the depth.
+  subtract `1` from power, add `METERS_PER_PERCENT` to the depth.
 - `return` the depth reached, as an `int`.
 
 | Call | Returns |
@@ -61,7 +61,7 @@ Open `main.py`. Fill in the three function bodies between `BEGIN YOUR CODE` and
 
 Run `python main.py`. At the prompt, type `-5`, then `99999`, then `450` - you
 should get two "out of range" messages, then the game opens. Once you're in,
-hold **DOWN** and watch the metre labels on the right slide past, and watch
+hold **DOWN** and watch the meter labels on the right slide past, and watch
 `POWER RANGE` drop as the battery drains.
 
 ---
@@ -86,7 +86,7 @@ grader runs the same check on the file you turn in.)
 - Validation loop shape: set the value once before the loop, then
   `while value < 1 or value > 6000:` ... ask again inside.
 - In `max_safe_depth`, use two variables (`power`, `depth`) and `power -= 1`,
-  `depth += METRES_PER_PERCENT` each pass. Return `depth`.
+  `depth += METERS_PER_PERCENT` each pass. Return `depth`.
 - `range(0, TICK_MAX + 1, TICK_STEP)` - the `+ 1` is what makes `2000` itself
   get drawn.
 - `draw_depth_ticks` returns nothing. It just loops and draws.

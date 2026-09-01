@@ -11,7 +11,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 import engine
 
-METRES_PER_PERCENT = 20
+METERS_PER_PERCENT = 20
 TICK_STEP = 100
 TICK_MAX = 2000
 
@@ -30,7 +30,7 @@ def max_safe_depth(start_power):
     depth = 0
     while power >= 1:
         power -= 1
-        depth += METRES_PER_PERCENT
+        depth += METERS_PER_PERCENT
     return depth
 
 

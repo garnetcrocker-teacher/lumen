@@ -13,7 +13,7 @@ Read briefing.md for exactly what each numbered step must do.
 
 import engine
 
-DESCENT_RATE = 20.0        # metres per second - a named constant. Do not change it.
+DESCENT_RATE = 20.0        # meters per second - a named constant. Do not change it.
 
 print("=" * 40)
 print("        LUMEN  -  PRE-DIVE INTAKE")
@@ -22,7 +22,7 @@ print("=" * 40)
 # --- BEGIN YOUR CODE ---------------------------------------------------------
 #
 # 1. Ask the pilot for their name.            Store it in   pilot
-# 2. Ask for the target depth in metres.      Store it in   target_depth
+# 2. Ask for the target depth in meters.      Store it in   target_depth
 #       This must be a whole number - wrap the input in int(...).
 # 3. Ask for the ballast mass in kilograms.   Store it in   ballast_kg
 #       This can have a decimal - wrap the input in float(...).

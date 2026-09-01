@@ -23,7 +23,7 @@ Open `main.py`. Between the two lines that say `BEGIN YOUR CODE` and
 | # | Step | Store in | Notes |
 |---|------|----------|-------|
 | 1 | Ask for the pilot's name | `pilot` | plain text, no conversion |
-| 2 | Ask for target depth in metres | `target_depth` | whole number - use `int(input(...))` |
+| 2 | Ask for target depth in meters | `target_depth` | whole number - use `int(input(...))` |
 | 3 | Ask for ballast in kg | `ballast_kg` | decimal ok - use `float(input(...))` |
 | 4 | Ask for battery charge percent | `battery_pct` | decimal ok - use `float(...)` |
 | 5 | Compute descent time | `descent_seconds` | `target_depth / DESCENT_RATE` |
