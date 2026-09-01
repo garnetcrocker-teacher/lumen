@@ -92,6 +92,6 @@ Paste the check.py output into the Canvas submission.
 
 ## If you're stuck / joining late
 
-This checkpoint's `main.py` already contains correct versions of Checkpoints 2
-and 3. Do the `SETUP.md` venv steps if you haven't, then edit only the three
-function bodies here.
+You don't need your Checkpoint 2 or 3 files. This checkpoint stands alone -
+`main.py` here has its own pre-dive step and the engine handles the rest. Do the
+`SETUP.md` setup if you haven't, then edit only the three function bodies here.

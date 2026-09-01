@@ -61,15 +61,23 @@ Every checkpoint has `check.py`. It runs offline, opens no window, prints
 SCORE: 16 / 16      POINTS: 100 / 100
 ```
 
-Students paste that output into the Canvas submission box (matches the
-script-plus-Canvas workflow already used in other courses). Canvas assignment is
-100 points; `check.py` already normalizes to 100. Suggested weight: each
-checkpoint small; the payoff is the finished game and the Module 12 / Final
-capstone.
+**Students submit their `main.py`** - the file they edited - to the Canvas
+assignment. Not the check.py output (trivially forgeable) and not check.py itself
+(identical for everyone). `check.py` is the student's own pre-flight check; you
+run the same `check.py` on the `main.py` they turned in to produce the grade.
 
-`check.py` is deliberately easy to defeat by hard-coding return values. That's
-acceptable at this level; spot-check a few submissions per checkpoint by opening
-`main.py`, and lean on the proctored module tests for individual accountability.
+To grade: drop each submitted `main.py` into a clean copy of the checkpoint
+folder and run `python check.py`. A `tools/grade.py` that does this over a folder
+of submissions is on the to-do list.
+
+Canvas assignment is 100 points; `check.py` already normalizes to 100. Suggested
+weight: each checkpoint small; the payoff is the finished game and the Module 12
+/ Final capstone.
+
+`check.py` can still be gamed by hard-coding returns to match the visible test
+cases. Skim each `main.py` (you're collecting them anyway) and lean on the
+proctored module tests for individual accountability. Later checkpoints' `check.py`
+use less predictable inputs to raise the effort of faking it.
 
 ---
 

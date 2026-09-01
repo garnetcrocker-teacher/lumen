@@ -85,6 +85,6 @@ Paste the check.py output into the Canvas submission.
 
 ## If you're stuck / joining late
 
-This checkpoint's `main.py` already contains a correct Checkpoint 2. You do **not**
-need your own Checkpoint 2 files. Do the `SETUP.md` venv steps if you haven't,
-then edit only the three function bodies here.
+You don't need your Checkpoint 2 files. The game reads a saved dive plan if one
+exists and uses sensible defaults if not, so it runs either way. Do the
+`SETUP.md` setup if you haven't, then edit only the three function bodies here.
