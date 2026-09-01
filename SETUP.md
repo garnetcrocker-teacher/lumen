@@ -21,9 +21,19 @@ terminal it opens.
 3. Press `Ctrl+Shift+P`, type **Python: Create Environment**, press Enter, then:
    - choose **Venv**
    - choose a Python 3.10+ interpreter when asked
-   - tick **`requirements.txt`** so it installs the libraries too
-4. Wait for the notification in the bottom-right to finish. That's it - VS Code
-   made a `.venv` folder and installed pygame-ce into it.
+   - when it lists dependency files to install, tick **`requirements.txt`** and
+     confirm. (This step only appears if `requirements.txt` is in the folder you
+     opened - if you don't see it, that's fine, step 5 covers it.)
+4. Wait for the notification in the bottom-right to finish. VS Code has now made
+   a `.venv` folder.
+5. **Confirm the library is installed.** Open a terminal
+   (**Terminal > New Terminal** - the prompt shows `(.venv)`) and run:
+   ```
+   python -m pip install -r requirements.txt
+   ```
+   If step 3 already installed it, this just prints "Requirement already
+   satisfied" - harmless. If step 3 never offered the checkbox, this is what
+   actually installs pygame-ce.
 
 From now on:
 
