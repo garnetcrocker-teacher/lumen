@@ -5,7 +5,7 @@ Module 3: Decision Structures and Boolean Logic
     Run the game:      python main.py      (press ESC or close the window to quit)
     Check your work:    python check.py
 
-Your job this week is the FOUR functions in the YOUR CODE section below.
+Your job this week is the FIVE functions in the YOUR CODE section below.
 
 frame() below your code is provided - the engine calls it every frame, nothing
 to change there.
@@ -61,29 +61,58 @@ def oxygen_state(oxygen_pct):
     return "GOOD"        # replace this with an if / elif / else
 
 
-def can_descend(ballast_kg, power_pct):
-    """Return True only when it is safe to dive deeper:
-    there must be ballast left (more than 0 kg) AND
-    some battery power left (more than 0 percent).
+def can_descend(ballast_kg, power_pct, hull_pct):
+    """Return True only when it is safe to dive deeper: there must be ballast
+    left (more than 0 kg) AND some battery power left (more than 0 percent)
+    AND the hull must still have integrity left (more than 0 percent).
     Otherwise return False.
 
-    Use the `and` keyword.
+    Use two `and`s to chain all three conditions together.
     """
     return True          # replace this with a boolean expression
+
+
+def overall_alert(hull_label, oxygen_label):
+    """Combine the hull and oxygen readouts into one overall alert level:
+
+        "DANGER"   when hull_label is "BREACH" OR oxygen_label is "CRITICAL"
+        "WARNING"  otherwise, when hull_label is "CAUTION" OR oxygen_label is "LOW"
+        "SAFE"     otherwise (both are fine)
+
+    Check for DANGER first - a CAUTION hull with CRITICAL oxygen must still
+    come out DANGER, not WARNING.
+
+    Example:  overall_alert("OK", "GOOD")        -> "SAFE"
+              overall_alert("CAUTION", "GOOD")    -> "WARNING"
+              overall_alert("OK", "CRITICAL")     -> "DANGER"
+    """
+    return "SAFE"        # replace this with an if / elif / else using `or`
 
 # --- END YOUR CODE -------------------------------------------------------
 
 
 def frame(sub, screen):
-    """The engine calls this ~60 times a second. It already uses your three
+    """The engine calls this ~60 times a second. It already uses your five
     functions - nothing to change here. (You'll learn to write functions like
     this one in Module 5.)"""
-    engine.draw_hull_status(screen, hull_status(sub.depth, sub.rated_depth))
-    engine.draw_hud_text("O2: " + oxygen_state(sub.oxygen),
-                         (engine.WIDTH // 2, 46), size=15, anchor="midtop",
-                         color=(150, 190, 210))
+    hull = hull_status(sub.depth, sub.rated_depth)
+    oxy = oxygen_state(sub.oxygen)
+    alert = overall_alert(hull, oxy)
 
-    if engine.key_down("DOWN") and can_descend(sub.ballast, sub.power):
+    engine.draw_hull_status(screen, hull)
+    engine.draw_hud_text("O2: " + oxy, (engine.WIDTH // 2, 46), size=15,
+                         anchor="midtop", color=(150, 190, 210))
+
+    if alert == "DANGER":
+        alert_color = (230, 90, 80)
+    elif alert == "WARNING":
+        alert_color = (230, 190, 90)
+    else:
+        alert_color = (90, 200, 150)
+    engine.draw_hud_text(f"STATUS: {alert}", (engine.WIDTH // 2, 66), size=14,
+                         anchor="midtop", color=alert_color)
+
+    if engine.key_down("DOWN") and can_descend(sub.ballast, sub.power, sub.hull):
         sub.descending = True
     if engine.key_down("UP"):
         sub.ascending = True

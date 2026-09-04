@@ -102,7 +102,7 @@ proctored module tests.
 | Checkpoint | Class dates | Module | Students write (concept) | check.py verifies |
 |---|---|---|---|---|
 | **cp02_io** | Sep 1, 8 | 2 - Input/Processing/Output | Terminal pre-dive intake: `input()`, `int()`/`float()`, arithmetic, formatted `print()` | dive plan saved with correct types; briefing printed |
-| **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (`and`) | 16 known input/output cases, boundary-focused |
+| **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `clamp_battery()` (if), `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (3-arg `and` chain), `overall_alert()` (elif + `or`, order-sensitive) | 28 known input/output cases, boundary- and ordering-focused |
 | **cp04_loops** | Sep 17, 22 | 4 - Repetition | `for` loop drawing depth-gauge ticks; sonar sweep loop; `while` input-validation on the pre-dive | gauge tick count; sonar completes one sweep; bad input re-prompts |
 | **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | Refactor frame code into `draw_hud()`, `update_sub()`, `spawn_creature()`, `check_systems()` with params + returns | each function callable in isolation, correct returns; game still runs |
 | **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | `save_dive_log()`, `load_best_depth()` with `try/except FileNotFoundError`; append discoveries to CSV | file written/read; missing file handled; best depth persists |

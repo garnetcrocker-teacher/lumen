@@ -1,5 +1,5 @@
 """
-INSTRUCTOR REFERENCE - a correct Checkpoint 3 main.py (the three function bodies).
+INSTRUCTOR REFERENCE - a correct Checkpoint 3 main.py (the five function bodies).
 Do not ship this to students.
 
 The two lines below put the repo root on the import path so `import engine`
@@ -41,19 +41,40 @@ def oxygen_state(oxygen_pct):
         return "CRITICAL"
 
 
-def can_descend(ballast_kg, power_pct):
-    return ballast_kg > 0 and power_pct > 0
+def can_descend(ballast_kg, power_pct, hull_pct):
+    return ballast_kg > 0 and power_pct > 0 and hull_pct > 0
+
+
+def overall_alert(hull_label, oxygen_label):
+    if hull_label == "BREACH" or oxygen_label == "CRITICAL":
+        return "DANGER"
+    elif hull_label == "CAUTION" or oxygen_label == "LOW":
+        return "WARNING"
+    else:
+        return "SAFE"
 
 # --- END YOUR CODE ---------------------------------------------------------
 
 
 def frame(sub, screen):
-    engine.draw_hull_status(screen, hull_status(sub.depth, sub.rated_depth))
-    engine.draw_hud_text("O2: " + oxygen_state(sub.oxygen),
-                         (engine.WIDTH // 2, 46), size=15, anchor="midtop",
-                         color=(150, 190, 210))
+    hull = hull_status(sub.depth, sub.rated_depth)
+    oxy = oxygen_state(sub.oxygen)
+    alert = overall_alert(hull, oxy)
 
-    if engine.key_down("DOWN") and can_descend(sub.ballast, sub.power):
+    engine.draw_hull_status(screen, hull)
+    engine.draw_hud_text("O2: " + oxy, (engine.WIDTH // 2, 46), size=15,
+                         anchor="midtop", color=(150, 190, 210))
+
+    if alert == "DANGER":
+        alert_color = (230, 90, 80)
+    elif alert == "WARNING":
+        alert_color = (230, 190, 90)
+    else:
+        alert_color = (90, 200, 150)
+    engine.draw_hud_text(f"STATUS: {alert}", (engine.WIDTH // 2, 66), size=14,
+                         anchor="midtop", color=alert_color)
+
+    if engine.key_down("DOWN") and can_descend(sub.ballast, sub.power, sub.hull):
         sub.descending = True
     if engine.key_down("UP"):
         sub.ascending = True

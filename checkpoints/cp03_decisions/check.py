@@ -1,7 +1,7 @@
 """
 Checkpoint 3 auto-check.   Run:  python check.py
 
-Imports your four functions from main.py and calls them with known values.
+Imports your five functions from main.py and calls them with known values.
 No window opens. Paste the final score into Canvas.
 """
 
@@ -10,7 +10,7 @@ import sys
 
 os.environ["LUMEN_HEADLESS"] = "1"      # stop main.py from opening a window
 
-TOTAL_CHECKS = 21
+TOTAL_CHECKS = 28
 
 results = []
 
@@ -41,7 +41,8 @@ def main():
         _report(0, TOTAL_CHECKS)
         return
 
-    for fn in ("clamp_battery", "hull_status", "oxygen_state", "can_descend"):
+    needed = ("clamp_battery", "hull_status", "oxygen_state", "can_descend", "overall_alert")
+    for fn in needed:
         if not hasattr(student, fn):
             print(f"  [FAIL] main.py has no function called {fn}()")
             _report(0, TOTAL_CHECKS)
@@ -49,6 +50,7 @@ def main():
 
     cb = student.clamp_battery
     hs, ox, cd = student.hull_status, student.oxygen_state, student.can_descend
+    oa = student.overall_alert
 
     check_value("clamp_battery(150)", cb(150), 100)
     check_value("clamp_battery(101)", cb(101), 100)
@@ -70,10 +72,18 @@ def main():
     check("oxygen_state(15)", ox(15), "CRITICAL")
     check("oxygen_state(0)", ox(0), "CRITICAL")
 
-    check("can_descend(40, 100)", cd(40, 100), True)
-    check("can_descend(0, 100)", cd(0, 100), False)
-    check("can_descend(40, 0)", cd(40, 0), False)
-    check("can_descend(0, 0)", cd(0, 0), False)
+    check("can_descend(40, 100, 100)", cd(40, 100, 100), True)
+    check("can_descend(0, 100, 100)", cd(0, 100, 100), False)
+    check("can_descend(40, 0, 100)", cd(40, 0, 100), False)
+    check("can_descend(40, 100, 0)", cd(40, 100, 0), False)
+    check("can_descend(0, 0, 0)", cd(0, 0, 0), False)
+
+    check('overall_alert("OK", "GOOD")', oa("OK", "GOOD"), "SAFE")
+    check('overall_alert("CAUTION", "GOOD")', oa("CAUTION", "GOOD"), "WARNING")
+    check('overall_alert("OK", "LOW")', oa("OK", "LOW"), "WARNING")
+    check('overall_alert("BREACH", "GOOD")', oa("BREACH", "GOOD"), "DANGER")
+    check('overall_alert("OK", "CRITICAL")', oa("OK", "CRITICAL"), "DANGER")
+    check('overall_alert("CAUTION", "CRITICAL")', oa("CAUTION", "CRITICAL"), "DANGER")
 
     _report(sum(results), len(results))
 
