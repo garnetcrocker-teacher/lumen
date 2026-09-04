@@ -129,6 +129,23 @@ cp02 intake sits in an `if __name__ == "__main__":` block from cp03 on; that lin
 is labelled "provided boilerplate, more on it later" and students just write the
 intake indented beneath it (one extra indent vs. how they wrote it in cp02).
 
+### Hint-fading rule
+
+Briefing hints should get *less* helpful as the semester goes on - fading
+scaffolds, not the same hand-holding all 12 weeks. Tie it to phase, not to each
+individual checkpoint:
+
+| Phase | Checkpoints | Modules | Hint style |
+|---|---|---|---|
+| Syntax scaffolding | cp02-cp04 | 2-4 | Near-literal: exact operator/line shape, a worked micro-example. (Already how these are written - keep it.) |
+| Concept pointers | cp05-cp09 | 5-9 (Functions, Files, Lists, Strings, Dicts) | Name the right tool or pattern ("you need something that builds a list one item at a time - which list method does that?"). No ready-to-paste code. |
+| Debugging prompts | cp10-cp12 | 10-12 (Classes, Inheritance, Recursion) | Socratic only - "what does printing X right before the return show you?" No syntax at all. Fewer hints too (1-2, not 4-5). |
+| Final project | - | - | No built-in hints - office hours / discussion board is the hint. |
+
+What does **not** fade: `check.py`'s `[FAIL] ... (got X, expected Y)` output.
+That's diagnostic feedback, not a spoiler - it's the safety net that keeps this
+from stranding anyone even as the prose hints get terser.
+
 ### Two drawing surfaces - keep this straight when building cp05+
 
 Inside `frame(sub, screen)`, anything drawn straight onto `screen` is *world*
