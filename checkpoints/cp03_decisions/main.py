@@ -66,9 +66,9 @@ def frame(sub, screen):
     functions - nothing to change here. (You'll learn to write functions like
     this one in Module 5.)"""
     engine.draw_hull_status(screen, hull_status(sub.depth, sub.rated_depth))
-    engine.draw_text(screen, "O2: " + oxygen_state(sub.oxygen),
-                     (engine.WIDTH // 2, 46), size=15, anchor="midtop",
-                     color=(150, 190, 210))
+    engine.draw_hud_text("O2: " + oxygen_state(sub.oxygen),
+                         (engine.WIDTH // 2, 46), size=15, anchor="midtop",
+                         color=(150, 190, 210))
 
     if engine.key_down("DOWN") and can_descend(sub.ballast, sub.power):
         sub.descending = True
@@ -77,8 +77,8 @@ def frame(sub, screen):
     if engine.key_pressed("L"):
         sub.light_on = not sub.light_on
 
-    engine.draw_text(screen, "DOWN dive   UP rise   L light   ESC quit",
-                     (16, engine.HEIGHT - 26), size=13, color=(120, 140, 155))
+    engine.draw_hud_text("DOWN dive   UP rise   L light   ESC quit",
+                         (16, engine.HEIGHT - 26), size=13, color=(120, 140, 155))
 
 
 # ============ YOUR CODE - CHECKPOINT 2 (carried over) ======================

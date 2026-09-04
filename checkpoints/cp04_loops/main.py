@@ -61,9 +61,9 @@ def draw_depth_ticks(screen, sub):
 
 def frame(sub, screen):
     draw_depth_ticks(screen, sub)
-    engine.draw_text(screen, f"POWER RANGE: {max_safe_depth(sub.power)} m",
-                     (engine.WIDTH // 2, 16), size=16, anchor="midtop",
-                     color=(150, 190, 210))
+    engine.draw_hud_text(f"POWER RANGE: {max_safe_depth(sub.power)} m",
+                         (engine.WIDTH // 2, 16), size=16, anchor="midtop",
+                         color=(150, 190, 210))
 
     if engine.key_down("DOWN"):
         sub.descending = True
@@ -72,8 +72,8 @@ def frame(sub, screen):
     if engine.key_pressed("L"):
         sub.light_on = not sub.light_on
 
-    engine.draw_text(screen, "DOWN dive   UP rise   L light   ESC quit",
-                     (16, engine.HEIGHT - 26), size=13, color=(120, 140, 155))
+    engine.draw_hud_text("DOWN dive   UP rise   L light   ESC quit",
+                         (16, engine.HEIGHT - 26), size=13, color=(120, 140, 155))
 
 
 if __name__ == "__main__":

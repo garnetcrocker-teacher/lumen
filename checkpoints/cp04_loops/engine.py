@@ -57,6 +57,7 @@ class _State:
         self.frame = 0
         self.snow = []
         self.screen = None
+        self.hud_surface = None    # dashboard layer, always drawn on top of the dark
 
 _state = _State()
 
@@ -193,6 +194,20 @@ def draw_glow(surface, pos, radius, color):
         surface.blit(blob, (x - r, y - r), special_flags=pygame.BLEND_ADD)
 
 
+def _hud_surface():
+    if _state.hud_surface is None:
+        _state.hud_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    return _state.hud_surface
+
+
+def draw_hud_text(text, pos, size=16, color=(198, 216, 232), anchor="topleft"):
+    """Draw a line of dashboard text that stays visible no matter how dark or
+    deep you are - like an instrument on the cockpit panel, not a light shining
+    into the water. Use this instead of draw_text for status readouts inside
+    frame(); use draw_text for anything that should be hidden by the dark."""
+    draw_text(_hud_surface(), text, pos, size=size, color=color, anchor=anchor)
+
+
 def world_y_to_screen(sub, world_depth):
     """Convert a depth in meters to a y pixel, given where the sub is now."""
     return int(SUB_SCREEN_Y + (world_depth - sub.depth) * PIXELS_PER_METER)
@@ -319,21 +334,26 @@ def _draw_base_hud(screen, sub):
 
 
 def draw_tick(screen, y, depth_m):
-    """Draw one depth marker: a short line at the right edge and a meter label.
-    Markers that land off the top or bottom of the window are skipped for you."""
+    """Draw one depth marker on the cockpit gauge: a short line at the right
+    edge and a meter label.  Always visible, like the rest of the dashboard, no
+    matter how dark it gets outside.  Markers off the top or bottom of the
+    window are skipped for you."""
     if -24 <= y <= HEIGHT + 24:
-        pygame.draw.line(screen, (86, 116, 132), (WIDTH - 58, int(y)),
+        surf = _hud_surface()
+        pygame.draw.line(surf, (86, 116, 132), (WIDTH - 58, int(y)),
                          (WIDTH - 22, int(y)), 1)
-        draw_text(screen, f"{depth_m} m", (WIDTH - 62, int(y) - 7), size=12,
+        draw_text(surf, f"{depth_m} m", (WIDTH - 62, int(y) - 7), size=12,
                   color=(118, 148, 163), anchor="topright")
 
 
 def draw_hull_status(screen, status):
-    """Show your Module 3 hull check.  Pass the string 'OK', 'CAUTION' or 'BREACH'."""
+    """Show your Module 3 hull check.  Pass the string 'OK', 'CAUTION' or
+    'BREACH'.  Drawn on the dashboard, so it stays visible in total darkness -
+    just like the O2 / PWR / HULL bars in the top-left."""
     colors = {"OK": (90, 200, 150), "CAUTION": (230, 190, 90), "BREACH": (230, 90, 80)}
     text = status if status in colors else f"?{status}?"
-    draw_text(screen, f"HULL: {text}", (WIDTH // 2, 16), size=20,
-              color=colors.get(status, (230, 90, 80)), anchor="midtop")
+    draw_hud_text(f"HULL: {text}", (WIDTH // 2, 16), size=20,
+                  color=colors.get(status, (230, 90, 80)), anchor="midtop")
 
 
 def draw_banner(screen, line1, line2=""):
@@ -429,7 +449,10 @@ def show_briefing(pilot, target_depth, ballast_kg, battery_pct):
 def run(frame_fn, setup_fn=None, title="LUMEN - a descent"):
     """Open the game window and run the loop.  Every frame the engine draws the
     ocean, then calls YOUR frame_fn(sub, screen), then draws the sub, the
-    darkness and the base HUD.  ESC or the window's close button quits."""
+    darkness and the base HUD.  Anything you draw with draw_hud_text (or via
+    draw_hull_status / draw_tick) is composited back on TOP of the darkness, so
+    dashboard readouts never get swallowed by the dark, only the world outside
+    your window does.  ESC or the window's close button quits."""
     if HEADLESS:
         return
     plan = load_diveplan()
@@ -450,6 +473,7 @@ def run(frame_fn, setup_fn=None, title="LUMEN - a descent"):
         running = _pump_events()
 
         _update_systems(sub)
+        _hud_surface().fill((0, 0, 0, 0))      # clear last frame's dashboard text
 
         _draw_background(screen, sub)
         _draw_snow(screen, sub)
@@ -457,6 +481,7 @@ def run(frame_fn, setup_fn=None, title="LUMEN - a descent"):
         _draw_submarine(screen, sub)
         _draw_darkness(screen, sub)
         _draw_target_line(screen, sub)
+        screen.blit(_state.hud_surface, (0, 0))    # dashboard on top - always visible
         _draw_base_hud(screen, sub)
         if not sub.alive:
             reason = "OXYGEN DEPLETED" if sub.oxygen <= 0 else "HULL BREACH"
@@ -478,6 +503,6 @@ if __name__ == "__main__":
         if key_pressed("L"):
             sub.light_on = not sub.light_on
         draw_hull_status(screen, "OK" if sub.depth < sub.rated_depth else "BREACH")
-        draw_text(screen, "engine self-test  -  DOWN/UP dive, L light, ESC quit",
-                  (16, HEIGHT - 28), size=13, color=(120, 140, 155))
+        draw_hud_text("engine self-test  -  DOWN/UP dive, L light, ESC quit",
+                      (16, HEIGHT - 28), size=13, color=(120, 140, 155))
     run(_demo, title="LUMEN engine self-test")

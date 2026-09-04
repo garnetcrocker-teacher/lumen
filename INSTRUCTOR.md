@@ -129,11 +129,30 @@ cp02 intake sits in an `if __name__ == "__main__":` block from cp03 on; that lin
 is labelled "provided boilerplate, more on it later" and students just write the
 intake indented beneath it (one extra indent vs. how they wrote it in cp02).
 
+### Two drawing surfaces - keep this straight when building cp05+
+
+Inside `frame(sub, screen)`, anything drawn straight onto `screen` is *world*
+content: `_draw_darkness()` runs right after `frame_fn` returns, so it gets
+covered/dimmed once you're deep and outside the light radius. That's exactly
+what you want for creatures later on (Module 7+) - the light should have to find
+them.
+
+Status readouts are the opposite: they should read like cockpit instruments, not
+things you see through the window, so they must stay visible in total darkness.
+`draw_hull_status()`, `draw_tick()`, and the new `draw_hud_text()` all render
+onto a separate transparent `_state.hud_surface` that the engine composites back
+on top *after* `_draw_darkness()`. Use `draw_hud_text()` (not `draw_text()`) for
+any new dashboard-style readout a checkpoint adds inside `frame()` - `draw_text()`
+targets whatever surface you hand it (normally the world `screen`), so calling it
+directly from `frame()` will get swallowed by the dark the moment depth ramps up.
+This was the cp03 bug: the HULL/O2 status was drawn with `draw_text(screen, ...)`
+inside `frame()`, so it rendered before `_draw_darkness` and got covered.
+
 ---
 
 ## Status of this repo
 
-- [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD (pilot / target-depth line / ballast->dive-rate / power), dive-plan I/O, `draw_tick`
+- [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD (pilot / target-depth line / ballast->dive-rate / power), dive-plan I/O, `draw_tick`, `draw_hud_text` (dashboard layer composited on top of the darkness so status readouts never get dimmed - see below)
 - [x] `cp02_io`, `cp03_decisions`, `cp04_loops` - complete (main + briefing + check + reference solution)
 - [ ] `cp05` - `cp12` - not built yet
 - [ ] `solution/lumen_full.py` - the finished game for playtesting - not built yet

@@ -74,6 +74,11 @@ opens: your name is top-right, `BALLAST 70 kg -> DIVE ~29 m/s`, and `TARGET
 turn green as you pass 900 m, and confirm that once `PWR` hits 0 you can no
 longer descend.
 
+Notice the `HULL:` and `O2:` readouts stay perfectly readable even in total
+darkness, just like the O2 / PWR / HULL bars in the top-left - they're cockpit
+instruments, not something you're seeing through the window. Only the water
+outside goes dark.
+
 ---
 
 ## Done when
