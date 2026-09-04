@@ -1,7 +1,7 @@
 """
 Checkpoint 3 auto-check.   Run:  python check.py
 
-Imports your three functions from main.py and calls them with known values.
+Imports your four functions from main.py and calls them with known values.
 No window opens. Paste the final score into Canvas.
 """
 
@@ -9,6 +9,8 @@ import os
 import sys
 
 os.environ["LUMEN_HEADLESS"] = "1"      # stop main.py from opening a window
+
+TOTAL_CHECKS = 21
 
 results = []
 
@@ -21,21 +23,38 @@ def check(call_text, got, expected):
     print(f"  {flag} {call_text}{extra}")
 
 
+def check_value(call_text, got, expected):
+    """Like check(), but only compares the value, not the type - an int or a
+    float answer is equally correct here."""
+    ok = got == expected
+    results.append(ok)
+    flag = "[PASS]" if ok else "[FAIL]"
+    extra = "" if ok else f"   (got {got!r}, expected {expected!r})"
+    print(f"  {flag} {call_text}{extra}")
+
+
 def main():
     try:
         import main as student
     except Exception as exc:
         print(f"  [FAIL] could not import main.py: {exc!r}")
-        _report(0, 16)
+        _report(0, TOTAL_CHECKS)
         return
 
-    for fn in ("hull_status", "oxygen_state", "can_descend"):
+    for fn in ("clamp_battery", "hull_status", "oxygen_state", "can_descend"):
         if not hasattr(student, fn):
             print(f"  [FAIL] main.py has no function called {fn}()")
-            _report(0, 16)
+            _report(0, TOTAL_CHECKS)
             return
 
+    cb = student.clamp_battery
     hs, ox, cd = student.hull_status, student.oxygen_state, student.can_descend
+
+    check_value("clamp_battery(150)", cb(150), 100)
+    check_value("clamp_battery(101)", cb(101), 100)
+    check_value("clamp_battery(100)", cb(100), 100)
+    check_value("clamp_battery(99.5)", cb(99.5), 99.5)
+    check_value("clamp_battery(0)", cb(0), 0)
 
     check("hull_status(500, 1000)", hs(500, 1000), "OK")
     check("hull_status(999, 1000)", hs(999, 1000), "OK")

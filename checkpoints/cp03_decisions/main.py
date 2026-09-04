@@ -5,7 +5,7 @@ Module 3: Decision Structures and Boolean Logic
     Run the game:      python main.py      (press ESC or close the window to quit)
     Check your work:    python check.py
 
-Your job this week is the THREE functions in the YOUR CODE section below.
+Your job this week is the FOUR functions in the YOUR CODE section below.
 
 frame() below your code is provided - the engine calls it every frame, nothing
 to change there.
@@ -13,7 +13,8 @@ to change there.
 Your Checkpoint 2 pre-dive intake is at the BOTTOM of this file, in the
 `if __name__ == "__main__":` block. A working reference version is filled in so
 the game runs. If you did Checkpoint 2, paste your own version in over it - this
-is your game now.
+is your game now. Either way, that section now also calls your new
+clamp_battery() function - see the comment down there.
 
 Controls once it runs:  DOWN = dive,  UP = rise,  L = toggle light
 """
@@ -23,6 +24,18 @@ import engine
 DESCENT_RATE = 20.0        # named constant, from Checkpoint 2
 
 # --- BEGIN YOUR CODE (Checkpoint 3) ----------------------------------------
+
+def clamp_battery(battery_pct):
+    """A battery gauge can't read more than 100%. If battery_pct is greater
+    than 100, return 100 instead. Otherwise return battery_pct unchanged.
+
+    (There's a one-line way to do this with a function called min() - you'll
+    meet it later in the course. For now, write it with a plain if statement.)
+
+    Example:  clamp_battery(150) -> 100      clamp_battery(60) -> 60
+    """
+    return battery_pct          # replace this with an if statement
+
 
 def hull_status(depth_m, rated_m):
     """Return a string describing the pressure load on the hull:
@@ -86,6 +99,10 @@ def frame(sub, screen):
 #  so the game runs - replace it with your own Checkpoint 2 code if you have it.
 #  `if __name__ == "__main__":` just means "only run this when you play the game
 #  directly"; write the intake lines indented under it. More on it later.
+#
+#  One change from plain Checkpoint 2: the battery line now passes through your
+#  new clamp_battery() function. If you paste in your own Checkpoint 2 code,
+#  wrap that same line the same way.
 # ==========================================================================
 if __name__ == "__main__":
     print("=" * 40)
@@ -94,7 +111,7 @@ if __name__ == "__main__":
     pilot = input("Pilot name: ")
     target_depth = int(input("Target depth (m): "))
     ballast_kg = float(input("Ballast (kg): "))
-    battery_pct = float(input("Battery (%): "))
+    battery_pct = clamp_battery(float(input("Battery (%): ")))   # NEW this week
     descent_seconds = target_depth / DESCENT_RATE
 
     print()

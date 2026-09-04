@@ -18,16 +18,28 @@ calls.
 
 ## What to do
 
-Open `main.py`. This week's work is the bodies of the three functions between
+Open `main.py`. This week's work is the bodies of the four functions between
 `BEGIN YOUR CODE (Checkpoint 3)` and `END YOUR CODE`. Don't change the `def`
 lines.
 
 > The bottom of the file has a **Checkpoint 2 (carried over)** section with a
 > working reference copy of last week's pre-dive intake. If you did Checkpoint 2,
 > paste your own version in there - it's your game. Either way, don't touch
-> `frame()`.
+> `frame()`, and see the note below about wiring in `clamp_battery()`.
 
-### 1. `hull_status(depth_m, rated_m)`
+### 1. `clamp_battery(battery_pct)`
+
+Battery gauges can't read more than 100%. If `battery_pct` is greater than 100,
+return `100` instead. Otherwise return `battery_pct` unchanged.
+
+This one is already wired up for you: the pre-dive intake at the bottom of the
+file calls `clamp_battery(float(input(...)))` on the raw input. If you paste in
+your *own* Checkpoint 2 code, wrap that same line the same way.
+
+(There's a one-line way to write this with a function called `min()` - you'll
+meet it later in the course. For now, use a plain `if` statement.)
+
+### 2. `hull_status(depth_m, rated_m)`
 
 | Condition | Return |
 |---|---|
@@ -35,7 +47,7 @@ lines.
 | `depth_m` at least `rated_m`, but less than `1.5 * rated_m` | `"CAUTION"` |
 | `depth_m` at least `1.5 * rated_m` | `"BREACH"` |
 
-### 2. `oxygen_state(oxygen_pct)`
+### 3. `oxygen_state(oxygen_pct)`
 
 | Condition | Return |
 |---|---|
@@ -43,7 +55,7 @@ lines.
 | greater than 15, up to and including 50 | `"LOW"` |
 | 15 or less | `"CRITICAL"` |
 
-### 3. `can_descend(ballast_kg, power_pct)`
+### 4. `can_descend(ballast_kg, power_pct)`
 
 Return `True` only when **both** `ballast_kg > 0` **and** `power_pct > 0`.
 Otherwise return `False`. Use the `and` keyword.
@@ -67,9 +79,10 @@ shows them on the HUD as you play:
 ## Try it
 
 Run `python main.py`. Type a dive plan at the prompts - try **pilot** your name,
-**target depth** `900`, **ballast** `70`, **battery** `40`. When the window
-opens: your name is top-right, `BALLAST 70 kg -> DIVE ~29 m/s`, and `TARGET
-900 m (... m to go)`. Hold **DOWN** to dive - watch the `HULL:` readout go `OK`
+**target depth** `900`, **ballast** `70`, **battery** `150` (yes, over 100 - see
+what `PWR` starts at). When the window opens: your name is top-right,
+`BALLAST 70 kg -> DIVE ~29 m/s`, and `TARGET 900 m (... m to go)`. Hold **DOWN**
+to dive - watch the `HULL:` readout go `OK`
 -> `CAUTION` -> `BREACH` past 1000 m and 1500 m, watch the TARGET line appear and
 turn green as you pass 900 m, and confirm that once `PWR` hits 0 you can no
 longer descend.
@@ -83,10 +96,14 @@ outside goes dark.
 
 ## Done when
 
-`python check.py` prints **16 / 16** (100 points). It imports your three
+`python check.py` prints **21 / 21** (100 points). It imports your four
 functions and calls them with these values:
 
 ```
+clamp_battery(150)  -> 100      clamp_battery(100)  -> 100
+clamp_battery(101)  -> 100      clamp_battery(99.5) -> 99.5
+clamp_battery(0)    -> 0
+
 hull_status(500, 1000)   -> "OK"          oxygen_state(80) -> "GOOD"
 hull_status(999, 1000)   -> "OK"          oxygen_state(51) -> "GOOD"
 hull_status(1000, 1000)  -> "CAUTION"     oxygen_state(50) -> "LOW"
@@ -105,17 +122,19 @@ grader runs the same check on the file you turn in.)
 
 ## Hints
 
-- The boundary cases (`1000, 1000` and `oxygen 50`) are where most points are
-  lost. Decide whether each comparison is `<` or `<=` and test it.
+- `clamp_battery` needs one `if`, no `elif`: `if battery_pct > 100:` set it to
+  `100`; either way, `return battery_pct` at the end.
+- Decide whether each comparison is `<` or `<=` and test it.
 - `elif` handles "the previous condition was false, now check this one".
-- The last function needs no `if` at all - `return ballast_kg > 0 and power_pct > 0`
-  is a complete answer once you understand why.
-- Return the string, don't `print()` it. The game and the checker both need the
-  returned value.
+- The last function actually needs no `if` at all.
+- Return the string (or number), don't `print()` it. The game and the checker
+  both need the returned value.
 
 ## If you're stuck / joining late
 
 You don't need your Checkpoint 2 files to start - the carried-over section at the
-bottom of `main.py` already has a working version. Do the `SETUP.md` setup if you
-haven't, then fill in the three function bodies. If you *did* do Checkpoint 2,
-swap your own intake code into that bottom section so the game is fully yours.
+bottom of `main.py` already has a working version, already wired to
+`clamp_battery()`. Do the `SETUP.md` setup if you haven't, then fill in the four
+function bodies. If you *did* do Checkpoint 2, swap your own intake code into
+that bottom section (keeping the `clamp_battery(...)` wrapper on the battery
+line) so the game is fully yours.

@@ -17,6 +17,12 @@ DESCENT_RATE = 20.0
 
 # --- BEGIN YOUR CODE (Checkpoint 3) ----------------------------------------
 
+def clamp_battery(battery_pct):
+    if battery_pct > 100:
+        return 100
+    return battery_pct
+
+
 def hull_status(depth_m, rated_m):
     if depth_m < rated_m:
         return "OK"
@@ -66,7 +72,7 @@ if __name__ == "__main__":
     pilot = input("Pilot name: ")
     target_depth = int(input("Target depth (m): "))
     ballast_kg = float(input("Ballast (kg): "))
-    battery_pct = float(input("Battery (%): "))
+    battery_pct = clamp_battery(float(input("Battery (%): ")))
     descent_seconds = target_depth / DESCENT_RATE
 
     print()
