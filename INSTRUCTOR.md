@@ -56,11 +56,36 @@ Canvas announcement: "replace your engine.py; it should say ENGINE_VERSION 1.1".
 
 Per checkpoint: zip the `checkpoints/cpNN_name/` folder and attach it to a Canvas
 assignment, released on the module schedule below. Do **not** post the whole repo
-or the Git URL - each checkpoint's `main.py` contains the solutions to all
-earlier checkpoints.
+or the Git URL - from cp03 on, each checkpoint's `main.py` contains a working
+reference solution to the *immediately preceding* checkpoint (the carry-forward
+model - see "Carry-forward model" above).
 
 An optional read-only public GitHub mirror containing only the *current*
 checkpoint is fine for students who ask.
+
+### There is no clean fix for the early-answer-key exposure, and that's fine
+
+Publishing checkpoint N necessarily hands out a working answer to checkpoint
+N-1. A Canvas `unlock_at` on the assignment plus a lock on its Files folder
+looks like a fix, but it isn't one once late submission is allowed: a student
+still legitimately working on N-1 after the class has moved on is, by design,
+exactly the student who should *not* yet see N-1's answer sitting in N's
+`main.py` - and locking N to N-1's due date does nothing for them, while
+locking it any looser protects no one. There's no timestamp that satisfies
+"available to everyone who needs to keep moving" and "invisible to anyone still
+working on the previous week" at once.
+
+Given that, don't try to engineer around it - manage it instead:
+
+- **Publish each checkpoint only when you're actually ready for students to see
+  it**, not automatically on a schedule. The gate is you deciding to ask for the
+  upload, not a Canvas date.
+- **Grade from the submitted `main.py`, not a self-reported score** (already the
+  model - see Grading below), and skim submissions for a suspiciously-perfect,
+  suspiciously-early Checkpoint 2 that looks copied from a Checkpoint 3 packet.
+- **Lean on the proctored module tests** for the individual-accountability
+  backstop that self-paced, late-submission-friendly checkpoints can't provide
+  on their own.
 
 ---
 
