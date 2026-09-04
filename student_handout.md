@@ -55,6 +55,11 @@ did that checkpoint, paste **your own** code in over the reference. By the end o
 the term the file is full of code you wrote: you built the whole game, one piece
 at a time.
 
+That reference version is there for continuity, not as an answer key. If you
+haven't finished a checkpoint yet, submitting that pre-filled reference code as
+your own solution to it is an academic integrity violation, the same as
+submitting anyone else's code would be.
+
 ## Missed a week? Joining late?
 
 **You don't need any earlier checkpoint's files to start.** Because every older
