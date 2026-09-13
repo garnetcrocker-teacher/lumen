@@ -162,7 +162,7 @@ individual checkpoint:
 
 | Phase | Checkpoints | Modules | Hint style |
 |---|---|---|---|
-| Syntax scaffolding | cp02-cp04 | 2-4 | Near-literal: exact operator/line shape, a worked micro-example. (Already how these are written - keep it.) |
+| Syntax scaffolding | cp02-cp04 | 2-4 | Near-literal on *values*: exact rules/thresholds as a table, a worked micro-example, and any brand-new engine API named explicitly (they can't guess `engine.draw_ring` exists). Not near-literal on *logic*: describe what a loop/condition needs to do in prose, don't hand them the assignment lines to copy. (cp04's `draw_sonar_rings` was rewritten from a literal code block to this prose style after review - see note below.) |
 | Concept pointers | cp05-cp09 | 5-9 (Functions, Files, Lists, Strings, Dicts) | Name the right tool or pattern ("you need something that builds a list one item at a time - which list method does that?"). No ready-to-paste code. |
 | Debugging prompts | cp10-cp12 | 10-12 (Classes, Inheritance, Recursion) | Socratic only - "what does printing X right before the return show you?" No syntax at all. Fewer hints too (1-2, not 4-5). |
 | Final project | - | - | No built-in hints - office hours / discussion board is the hint. |

@@ -22,7 +22,7 @@ TICK_STEP = 100
 TICK_MAX = 2000
 
 SONAR_RANGE_MAX = 400
-SWEEP_SECONDS = 2.5
+SWEEP_SECONDS = 8.0
 PULSE_COUNT = 4
 
 # --- BEGIN YOUR CODE (Checkpoint 4) -----------------------------------------

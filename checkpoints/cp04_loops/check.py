@@ -144,7 +144,7 @@ def main():
     # Independent copy of the expected formula - freezes engine.now() to a known
     # value so the animation is fully deterministic for testing.
     SONAR_RANGE_MAX = 400
-    SWEEP_SECONDS = 2.5
+    SWEEP_SECONDS = 8.0
     PULSE_COUNT = 4
 
     def expected_radii(power, t):
@@ -190,7 +190,7 @@ def main():
     check("draw_sonar_rings centers every pulse on the sub",
           centers_ok, f"expected center {expected_center}")
 
-    for power, t in [(50, 1.25), (0, 0.6), (100, 2.5)]:
+    for power, t in [(50, 4.0), (0, 1.92), (100, 8.0)]:
         try:
             exp = expected_radii(power, t)
             got = [r for _, r in rings_for(power, t)]

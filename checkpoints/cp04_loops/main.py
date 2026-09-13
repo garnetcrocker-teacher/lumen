@@ -38,7 +38,7 @@ TICK_MAX = 2000               # ... from 0 m down to this depth
 SONAR_RANGE_MAX = 400         # how far sonar reaches, in pixels, at full battery
                                # (compare: the light only reaches 155 - sonar
                                # is your long-range sense, light is close-range detail)
-SWEEP_SECONDS = 2.5           # how long one ping takes to travel out to max range
+SWEEP_SECONDS = 8.0           # how long one ping takes to travel out to max range
 PULSE_COUNT = 4               # how many pulses are traveling outward at once
 
 # --- BEGIN YOUR CODE (Checkpoint 4) -----------------------------------------
@@ -72,16 +72,20 @@ def max_safe_depth(start_power):
 
 
 def draw_depth_ticks(screen, sub):
-    """Draw a depth marker every TICK_STEP meters, from 0 m down to TICK_MAX,
-    colored by how dangerous that depth is - reusing hull_status() from
-    Checkpoint 3 (it's carried over at the bottom of this file).
+    """Draw a depth marker every TICK_STEP meters, from 0 m up to and
+    including TICK_MAX, colored by how dangerous that depth is - reusing
+    hull_status() from Checkpoint 3 (it's carried over at the bottom of this
+    file).
 
-    Use a for loop over range(0, TICK_MAX + 1, TICK_STEP). For each depth d:
+    For each depth d:
         - status = hull_status(d, sub.rated_depth)
         - pick a color: "OK" -> OK_COLOR, "CAUTION" -> CAUTION_COLOR,
           "BREACH" -> BREACH_COLOR
         - y = engine.world_y_to_screen(sub, d)     # d in meters -> y in pixels
         - engine.draw_tick(screen, y, d, color)    # draws the line + label
+
+    Use a for loop with range() so d takes on every multiple of TICK_STEP
+    from 0 through TICK_MAX (remember range()'s stop value is exclusive).
     """
     pass
 
@@ -90,24 +94,26 @@ def draw_sonar_rings(screen, sub):
     """Sonar reaches much farther than your light, and it isn't a fixed
     picture - a handful of pulses are always traveling outward and looping
     back, like a real active sonar ping. Range still depends on battery, same
-    as the light.
+    as the light: 0 pixels at dead battery, SONAR_RANGE_MAX pixels at a full
+    one.
 
-    1. How far sonar reaches right now (0 at dead battery, SONAR_RANGE_MAX at
-       a full one):
-           sonar_range = sub.power * (SONAR_RANGE_MAX / 100)
+    Loop over range(PULSE_COUNT) so each pulse gets its own iteration i. All
+    the pulses travel at the same speed, but they don't start at the same
+    point along their trip - spread their starting points evenly across the
+    0-1 range using i / PULSE_COUNT.
 
-    2. Loop `for i in range(PULSE_COUNT):` - each pulse starts at a different
-       point along its outward trip so they end up evenly spread out:
-           offset = i / PULSE_COUNT                 # 0, 0.25, 0.5, 0.75 for 4
-           fraction = (engine.now() / SWEEP_SECONDS + offset) % 1.0
-           radius = fraction * sonar_range
-           engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
+    A pulse's position is a fraction from 0 (just leaving the sub) to 1
+    (reached max range). engine.now() gives seconds since the game started
+    and only ever increases, so dividing it by SWEEP_SECONDS and adding a
+    pulse's own starting point gives a number that climbs forever. Taking
+    that value modulo 1 (`% 1.0`) is what turns an endless climb into
+    something that goes 0 -> 1 -> 0 -> 1 ..., once every SWEEP_SECONDS -
+    without it, a pulse would just fly off past the edge of the screen
+    instead of looping back to the sub.
 
-    `engine.now()` returns seconds since the game started, and it only ever
-    goes up. Dividing by SWEEP_SECONDS and taking `% 1.0` is what turns that
-    into a value that counts from 0 up to 1 and then starts over every
-    SWEEP_SECONDS - that reset is what makes each pulse look like it travels
-    out to sonar_range and then begins again at the sub, over and over.
+    Once you have that 0-1 fraction for a pulse, its radius is that fraction
+    of this frame's sonar range. Draw each pulse centered on the sub with
+    engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius).
     """
     pass
 
