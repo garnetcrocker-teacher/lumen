@@ -194,6 +194,12 @@ def draw_glow(surface, pos, radius, color):
         surface.blit(blob, (x - r, y - r), special_flags=pygame.BLEND_ADD)
 
 
+def draw_ring(surface, pos, radius, color=(90, 170, 200), width=2):
+    """Draw a circle outline (not filled) centered at pos with the given
+    radius - handy for sonar-style rings drawn with a loop."""
+    pygame.draw.circle(surface, color, (int(pos[0]), int(pos[1])), max(1, int(radius)), width)
+
+
 def _hud_surface():
     if _state.hud_surface is None:
         _state.hud_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
@@ -333,17 +339,21 @@ def _draw_base_hud(screen, sub):
               size=14, color=(150, 165, 178), anchor="topright")
 
 
-def draw_tick(screen, y, depth_m):
+def draw_tick(screen, y, depth_m, color=None):
     """Draw one depth marker on the cockpit gauge: a short line at the right
-    edge and a meter label.  Always visible, like the rest of the dashboard, no
-    matter how dark it gets outside.  Markers off the top or bottom of the
-    window are skipped for you."""
+    edge and a meter label.  Pass a color to tint that marker (used from
+    Checkpoint 4 on, to show which depths are dangerous); leave it out for a
+    neutral gray.  Always visible, like the rest of the dashboard, no matter
+    how dark it gets outside.  Markers off the top or bottom of the window are
+    skipped for you."""
     if -24 <= y <= HEIGHT + 24:
+        line_col = color if color is not None else (86, 116, 132)
+        text_col = color if color is not None else (118, 148, 163)
         surf = _hud_surface()
-        pygame.draw.line(surf, (86, 116, 132), (WIDTH - 58, int(y)),
+        pygame.draw.line(surf, line_col, (WIDTH - 58, int(y)),
                          (WIDTH - 22, int(y)), 1)
         draw_text(surf, f"{depth_m} m", (WIDTH - 62, int(y) - 7), size=12,
-                  color=(118, 148, 163), anchor="topright")
+                  color=text_col, anchor="topright")
 
 
 def draw_hull_status(screen, status):

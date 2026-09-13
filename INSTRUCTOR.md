@@ -128,7 +128,7 @@ proctored module tests.
 |---|---|---|---|---|
 | **cp02_io** | Sep 1, 8 | 2 - Input/Processing/Output | Terminal pre-dive intake: `input()`, `int()`/`float()`, arithmetic, formatted `print()` | dive plan saved with correct types; briefing printed |
 | **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `clamp_battery()` (if), `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (3-arg `and` chain), `overall_alert()` (elif + `or`, order-sensitive) | 28 known input/output cases, boundary- and ordering-focused |
-| **cp04_loops** | Sep 17, 22 | 4 - Repetition | `for` loop drawing depth-gauge ticks; sonar sweep loop; `while` input-validation on the pre-dive | gauge tick count; sonar completes one sweep; bad input re-prompts |
+| **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and accumulator (`max_safe_depth`) loops; `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop drawing sonar rings | boundary-focused value checks; tick position + color; ring radius + center |
 | **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | Refactor frame code into `draw_hud()`, `update_sub()`, `spawn_creature()`, `check_systems()` with params + returns | each function callable in isolation, correct returns; game still runs |
 | **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | `save_dive_log()`, `load_best_depth()` with `try/except FileNotFoundError`; append discoveries to CSV | file written/read; missing file handled; best depth persists |
 | **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | Single creature -> `creatures = []`; spawn/append; `for c in creatures` update+draw; cull; `(x, y)` tuples; max/min/len over depths | many independent creatures; list ops correct; stats correct |
@@ -190,11 +190,60 @@ directly from `frame()` will get swallowed by the dark the moment depth ramps up
 This was the cp03 bug: the HULL/O2 status was drawn with `draw_text(screen, ...)`
 inside `frame()`, so it rendered before `_draw_darkness` and got covered.
 
+### Ownership migration - the long-term goal
+
+The instructor's stated goal: by the end of the course, students should feel
+like they wrote the whole game, ideally including chunks of `engine.py` itself.
+**The mechanism is not "copy engine logic into `main.py`."** Code that
+conceptually belongs in the engine (a class, a simulation step, a reusable
+helper) should stay there - copying it into `main.py` just to make it
+student-touched would clutter the one file that's supposed to stay readable as
+"this week's work." Instead, the plan is to **open up `engine.py` itself for
+direct editing once a checkpoint has the background to do so** - the current
+"you never edit `engine.py`" rule is a scaffold for *now*, not a permanent
+architecture decision, and it's expected to loosen piece by piece.
+
+Concretely, a later checkpoint's `main.py` instructions can point students
+*into* `engine.py` and say "this week, fill in the body of this one function/
+method there" - the same fenced-region convention already used in `main.py`,
+just relocated. Pygame-specific lines inside that region (surface creation,
+blend flags, alpha math) stay provided/commented even after the region opens
+up, since the course never teaches the pygame API itself - only the game-logic
+lines around them become the student's to write.
+
+Rough roadmap, revisit as each module actually gets built:
+
+- **Module 5 (Functions):** still `main.py` - refactor `frame()`'s contents
+  into named functions, as planned. Doesn't yet touch `engine.py`.
+- **Module 7 (Lists) / Module 9 (Dicts):** build the creature list and the
+  catalog dict as student-owned from the start (in `main.py`, since that's new
+  content, not a migration) rather than engine-managed state a checkpoint
+  merely reads.
+- **Module 10 (Classes):** the first real `engine.py` hand-off candidate -
+  open up the `Submarine` class (and `Creature`) for students to author
+  directly in the engine file, with the pygame-facing bits still scaffolded.
+  This is where "I wrote the submarine" becomes literally true.
+- **Module 11 (Inheritance):** creature subclasses, likely also written
+  directly into (or alongside) the engine's class hierarchy rather than
+  main.py, once inheritance is on the table.
+- **Final project:** by this point as much of `engine.py` as is reasonable
+  should have passed through student hands at some point in the semester - the
+  irreducible remainder is the window/event-loop/raw-drawing plumbing nobody
+  in an intro course should be asked to write from scratch.
+
+This has a real infrastructure implication worth flagging now, not solving
+yet: once `engine.py` is partly student-edited, `tools/sync_engine.py`'s
+"copy one canonical engine.py into every checkpoint" model stops working as-is
+- a later checkpoint would need to carry forward the *previous* checkpoint's
+(possibly student-edited) `engine.py`, the same way `main.py` already carries
+its own history forward. Design that properly when Module 10 gets built, not
+before.
+
 ---
 
 ## Status of this repo
 
-- [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD (pilot / target-depth line / ballast->dive-rate / power), dive-plan I/O, `draw_tick`, `draw_hud_text` (dashboard layer composited on top of the darkness so status readouts never get dimmed - see below)
+- [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD (pilot / target-depth line / ballast->dive-rate / power), dive-plan I/O, `draw_tick` (optional color arg from cp04 on), `draw_ring`, `draw_hud_text` (dashboard layer composited on top of the darkness so status readouts never get dimmed - see below)
 - [x] `cp02_io`, `cp03_decisions`, `cp04_loops` - complete (main + briefing + check + reference solution)
 - [ ] `cp05` - `cp12` - not built yet
 - [ ] `solution/lumen_full.py` - the finished game for playtesting - not built yet
