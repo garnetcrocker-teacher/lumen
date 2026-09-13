@@ -35,8 +35,9 @@ METERS_PER_PERCENT = 20       # every 1 percent of battery is worth 20 m of desc
 TICK_STEP = 100               # draw a depth marker every this many meters
 TICK_MAX = 2000               # ... from 0 m down to this depth
 
-RING_COUNT = 5                # how many sonar rings to draw around the sub
+RING_COUNT = 5                # the most rings you'll ever see (full battery)
 RING_GAP = 28                 # pixels between each ring
+POWER_PER_RING = 20           # percent of battery that keeps one ring active
 
 # --- BEGIN YOUR CODE (Checkpoint 4) -----------------------------------------
 
@@ -84,13 +85,19 @@ def draw_depth_ticks(screen, sub):
 
 
 def draw_sonar_rings(screen, sub):
-    """Draw RING_COUNT sonar rings centered on the sub, RING_GAP pixels apart,
-    using a for loop.
+    """Sonar draws down the battery, just like the light does - so the number
+    of rings you can see should track PWR, not stay fixed.
 
-    The sub is drawn at (engine.WIDTH // 2, engine.SUB_SCREEN_Y). Loop with
-    `for i in range(1, RING_COUNT + 1):` and for each i:
-        radius = i * RING_GAP
-        engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
+    1. Figure out how many rings you can afford:
+           rings = sub.power // POWER_PER_RING     (whole rings only)
+       If that's more than RING_COUNT, set it to RING_COUNT instead (an `if`,
+       not a loop) - that's the most you'll ever see, at full battery.
+    2. Loop `for i in range(1, rings + 1):` and for each i:
+           radius = i * RING_GAP
+           engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
+
+    At 100% power that's 5 rings. Below 20%, `rings` is 0 and the loop simply
+    doesn't run - sonar goes dark before your light does.
     """
     pass
 

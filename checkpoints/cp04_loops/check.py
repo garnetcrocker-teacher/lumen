@@ -13,7 +13,7 @@ import sys
 
 os.environ["LUMEN_HEADLESS"] = "1"
 
-TOTAL_CHECKS = 16
+TOTAL_CHECKS = 19
 
 results = []
 
@@ -141,24 +141,40 @@ def main():
           f"first few colors: {got_colors[:3]} (did you pass color to draw_tick?)")
 
     # --- draw_sonar_rings ------------------------------------------------------
-    ring_calls = []
+    expected_center = (engine.WIDTH // 2, engine.SUB_SCREEN_Y)
     real_ring = engine.draw_ring
-    engine.draw_ring = lambda screen, pos, radius, *a, **kw: ring_calls.append((tuple(pos), radius))
+
+    def rings_for_power(power):
+        calls = []
+        engine.draw_ring = lambda screen, pos, radius, *a, **kw: calls.append((tuple(pos), radius))
+        try:
+            sub2 = engine.Submarine(engine.DEFAULT_DIVEPLAN)
+            sub2.power = power
+            student.draw_sonar_rings(None, sub2)
+        finally:
+            engine.draw_ring = real_ring
+        return calls
+
     try:
-        sub2 = engine.Submarine(engine.DEFAULT_DIVEPLAN)
-        student.draw_sonar_rings(None, sub2)
+        calls_100 = rings_for_power(100)
     except Exception as exc:
         check("draw_sonar_rings runs without error", False, repr(exc))
-    finally:
-        engine.draw_ring = real_ring
+        calls_100 = []
 
-    expected_center = (engine.WIDTH // 2, engine.SUB_SCREEN_Y)
-    radii = [r for _, r in ring_calls]
-    check("draw_sonar_rings draws rings at radius 28, 56, 84, 112, 140",
-          radii == [28, 56, 84, 112, 140], f"got radii {radii}")
-    centers_ok = len(ring_calls) > 0 and all(p == expected_center for p, _ in ring_calls)
+    radii_100 = [r for _, r in calls_100]
+    check("draw_sonar_rings at 100% power draws radius 28, 56, 84, 112, 140",
+          radii_100 == [28, 56, 84, 112, 140], f"got radii {radii_100}")
+    centers_ok = len(calls_100) > 0 and all(p == expected_center for p, _ in calls_100)
     check("draw_sonar_rings centers every ring on the sub",
           centers_ok, f"expected center {expected_center}")
+
+    for power, expected_radii in [(45, [28, 56]), (20, [28]), (15, [])]:
+        try:
+            got_radii = [r for _, r in rings_for_power(power)]
+            check(f"draw_sonar_rings at {power}% power draws {expected_radii or 'no rings'}",
+                  got_radii == expected_radii, f"got radii {got_radii}")
+        except Exception as exc:
+            check(f"draw_sonar_rings at {power}% power", False, repr(exc))
 
     _report(sum(results), len(results))
 

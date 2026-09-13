@@ -9,10 +9,12 @@
 
 Checkpoints 2 and 3 are carried into this week's `main.py` - the pre-dive
 intake at the very bottom, and your five Checkpoint 3 functions just above it.
-This week the cockpit gets two new instruments: a **depth gauge** running down
-the right edge of the screen, color-coded by how dangerous each depth is, and a
-**sonar display** - rings of pings around the sub. Both are drawn one piece at
-a time, with a loop.
+This week the cockpit gets two new instruments, and both are actually *for*
+something, not just decoration: a **depth gauge** running down the right edge
+of the screen, color-coded by how dangerous each depth is (reusing last week's
+`hull_status`), and a **sonar display** - rings around the sub whose *count*
+tells you how much battery is left, the same way the light does. Both are
+drawn one piece at a time, with a loop.
 
 ---
 
@@ -73,16 +75,23 @@ engine.draw_tick(screen, y, d, color)
 `OK_COLOR`, `CAUTION_COLOR`, and `BREACH_COLOR` are already defined for you at
 the top of the file - same colors the `HULL:` readout uses.
 
-### 4. `draw_sonar_rings(screen, sub)` - a `for` loop drawing a series
+### 4. `draw_sonar_rings(screen, sub)` - a `for` loop, capped by an `if`
 
-The sub sits at `(engine.WIDTH // 2, engine.SUB_SCREEN_Y)`. Draw `RING_COUNT`
-rings around it, each `RING_GAP` pixels farther out than the last:
+Sonar draws down the battery, the same as the light - so this isn't always
+`RING_COUNT` rings, it's *as many as you can currently afford*:
 
 ```python
-for i in range(1, RING_COUNT + 1):
+rings = sub.power // POWER_PER_RING       # whole rings only
+if rings > RING_COUNT:
+    rings = RING_COUNT                     # RING_COUNT is the max, at full battery
+
+for i in range(1, rings + 1):
     radius = i * RING_GAP
     engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
 ```
+
+At 100% power that's 5 rings. Below 20%, `rings` is `0` and `range(1, 1)` is
+empty - the loop just doesn't run. Sonar goes dark before your light does.
 
 ---
 
@@ -90,17 +99,19 @@ for i in range(1, RING_COUNT + 1):
 
 Run `python main.py`. The pre-dive intake now rejects an out-of-range target
 depth (try `-5`, then `99999`, then `1200`) before the window opens. Once
-you're in: rings should surround the sub immediately, and the depth scale on
-the right should show green ticks near the surface, turning yellow past 1000 m
-and red past 1500 m (assuming a 1000 m rated hull). Hold **DOWN** and watch
-`POWER RANGE` drop as the battery drains, and confirm you can't descend once
-`PWR`, ballast, or `HULL` hits 0 - same gate as last week, now with hull added.
+you're in: five rings should surround the sub at full battery, and the depth
+scale on the right should show green ticks near the surface, turning yellow
+past 1000 m and red past 1500 m (assuming a 1000 m rated hull). Hold **DOWN**
+and watch `POWER RANGE` drop as the battery drains - and watch the sonar rings
+disappear one at a time as `PWR` crosses each multiple of 20%, going dark
+completely below 20%. Confirm you can't descend once `PWR`, ballast, or `HULL`
+hits 0 - same gate as last week, now with hull added.
 
 ---
 
 ## Done when
 
-`python check.py` prints **16 / 16** (100 points). It checks:
+`python check.py` prints **19 / 19** (100 points). It checks:
 
 - `read_valid_depth()` rejects out-of-range numbers and returns the first
   valid one, as an `int` (boundaries `1` and `6000` included)
@@ -108,8 +119,9 @@ and red past 1500 m (assuming a 1000 m rated hull). Hold **DOWN** and watch
 - `draw_depth_ticks()` calls `engine.draw_tick` once per marker (`0` to
   `2000`), with the correct on-screen position **and** the correct color for
   each depth
-- `draw_sonar_rings()` calls `engine.draw_ring` five times, at radius `28, 56,
-  84, 112, 140`, all centered on the sub
+- `draw_sonar_rings()` calls `engine.draw_ring` the right number of times for
+  several different battery levels (100%, 45%, 20%, 15%), always centered on
+  the sub, with radius `28, 56, 84, 112, 140` in order
 
 Submit your `main.py` to Canvas. (Run `check.py` first to see your score - the
 grader runs the same check on the file you turn in.)
@@ -126,8 +138,9 @@ grader runs the same check on the file you turn in.)
   get drawn.
 - `draw_depth_ticks` needs an `if`/`elif`/`else` *inside* the `for` loop - one
   decision per depth, every time around.
-- `draw_sonar_rings` is the simplest of the four: one line inside the loop
-  computes `radius`, the next line draws it.
+- `draw_sonar_rings`: the `if` that caps `rings` at `RING_COUNT` comes *before*
+  the loop, only once - not inside it. `sub.power // POWER_PER_RING` does the
+  floor-division for you; don't round it yourself.
 - Both drawing functions return nothing. They just loop and draw.
 
 ## If you're stuck / joining late
