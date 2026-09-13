@@ -141,40 +141,63 @@ def main():
           f"first few colors: {got_colors[:3]} (did you pass color to draw_tick?)")
 
     # --- draw_sonar_rings ------------------------------------------------------
+    # Independent copy of the expected formula - freezes engine.now() to a known
+    # value so the animation is fully deterministic for testing.
+    SONAR_RANGE_MAX = 400
+    SWEEP_SECONDS = 2.5
+    PULSE_COUNT = 4
+
+    def expected_radii(power, t):
+        sonar_range = power * (SONAR_RANGE_MAX / 100)
+        out = []
+        for i in range(PULSE_COUNT):
+            offset = i / PULSE_COUNT
+            fraction = (t / SWEEP_SECONDS + offset) % 1.0
+            out.append(fraction * sonar_range)
+        return out
+
     expected_center = (engine.WIDTH // 2, engine.SUB_SCREEN_Y)
     real_ring = engine.draw_ring
+    real_t = engine._state.t
 
-    def rings_for_power(power):
+    def rings_for(power, t):
         calls = []
         engine.draw_ring = lambda screen, pos, radius, *a, **kw: calls.append((tuple(pos), radius))
+        engine._state.t = t
         try:
             sub2 = engine.Submarine(engine.DEFAULT_DIVEPLAN)
             sub2.power = power
             student.draw_sonar_rings(None, sub2)
         finally:
             engine.draw_ring = real_ring
+            engine._state.t = real_t
         return calls
 
+    def radii_match(got, expected):
+        return len(got) == len(expected) and all(abs(g - e) < 0.5 for g, e in zip(got, expected))
+
     try:
-        calls_100 = rings_for_power(100)
+        calls0 = rings_for(100, 0.0)
     except Exception as exc:
         check("draw_sonar_rings runs without error", False, repr(exc))
-        calls_100 = []
+        calls0 = []
 
-    radii_100 = [r for _, r in calls_100]
-    check("draw_sonar_rings at 100% power draws radius 28, 56, 84, 112, 140",
-          radii_100 == [28, 56, 84, 112, 140], f"got radii {radii_100}")
-    centers_ok = len(calls_100) > 0 and all(p == expected_center for p, _ in calls_100)
-    check("draw_sonar_rings centers every ring on the sub",
+    exp0 = expected_radii(100, 0.0)
+    got0 = [r for _, r in calls0]
+    check(f"draw_sonar_rings at 100% power, t=0s draws radii ~{[round(r) for r in exp0]}",
+          radii_match(got0, exp0), f"got {got0}")
+    centers_ok = len(calls0) > 0 and all(p == expected_center for p, _ in calls0)
+    check("draw_sonar_rings centers every pulse on the sub",
           centers_ok, f"expected center {expected_center}")
 
-    for power, expected_radii in [(45, [28, 56]), (20, [28]), (15, [])]:
+    for power, t in [(50, 1.25), (0, 0.6), (100, 2.5)]:
         try:
-            got_radii = [r for _, r in rings_for_power(power)]
-            check(f"draw_sonar_rings at {power}% power draws {expected_radii or 'no rings'}",
-                  got_radii == expected_radii, f"got radii {got_radii}")
+            exp = expected_radii(power, t)
+            got = [r for _, r in rings_for(power, t)]
+            check(f"draw_sonar_rings at {power}% power, t={t}s draws radii ~{[round(r) for r in exp]}",
+                  radii_match(got, exp), f"got {got}")
         except Exception as exc:
-            check(f"draw_sonar_rings at {power}% power", False, repr(exc))
+            check(f"draw_sonar_rings at {power}% power, t={t}s", False, repr(exc))
 
     _report(sum(results), len(results))
 

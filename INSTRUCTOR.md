@@ -128,7 +128,7 @@ proctored module tests.
 |---|---|---|---|---|
 | **cp02_io** | Sep 1, 8 | 2 - Input/Processing/Output | Terminal pre-dive intake: `input()`, `int()`/`float()`, arithmetic, formatted `print()` | dive plan saved with correct types; briefing printed |
 | **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `clamp_battery()` (if), `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (3-arg `and` chain), `overall_alert()` (elif + `or`, order-sensitive) | 28 known input/output cases, boundary- and ordering-focused |
-| **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and accumulator (`max_safe_depth`) loops; `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop (capped by an `if`) drawing sonar rings whose *count* tracks battery, same as the light | boundary-focused value checks; tick position + color; ring radius/center across several power levels |
+| **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and accumulator (`max_safe_depth`) loops; `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop over `PULSE_COUNT` animating an outward-sweeping, battery-scaled sonar ping via `engine.now()` and `%` wraparound | boundary-focused value checks; tick position + color; sonar radius at controlled `(power, t)` combinations |
 | **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | Refactor frame code into `draw_hud()`, `update_sub()`, `spawn_creature()`, `check_systems()` with params + returns | each function callable in isolation, correct returns; game still runs |
 | **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | `save_dive_log()`, `load_best_depth()` with `try/except FileNotFoundError`; append discoveries to CSV | file written/read; missing file handled; best depth persists |
 | **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | Single creature -> `creatures = []`; spawn/append; `for c in creatures` update+draw; cull; `(x, y)` tuples; max/min/len over depths | many independent creatures; list ops correct; stats correct |
@@ -189,6 +189,39 @@ targets whatever surface you hand it (normally the world `screen`), so calling i
 directly from `frame()` will get swallowed by the dark the moment depth ramps up.
 This was the cp03 bug: the HULL/O2 status was drawn with `draw_text(screen, ...)`
 inside `frame()`, so it rendered before `_draw_darkness` and got covered.
+
+### Sonar - what it's for, and where it's going
+
+cp04's sonar sweep isn't meant to stay decoration. The design intent is a
+two-tier detection model once creatures exist:
+
+- **Light** = short range (`155` px), full detail - if something's in it, you
+  can see exactly what it is. Costs battery continuously while on.
+- **Sonar** = long range (`400` px, cp04's `SONAR_RANGE_MAX`), coarse
+  awareness only - tells you *something's* out there and roughly how far, not
+  what it is. Also battery-scaled (`sonar_range = power * (SONAR_RANGE_MAX/100)`).
+
+That split is the actual point: it gives a reason to approach a sonar contact
+cautiously (worth the battery to light it up and look?) instead of only ever
+reacting to what's already lit.
+
+**Module 7 (Lists) - the concrete next step:** once a `creatures` list exists,
+loop over it, compute each creature's distance from the sub, and light up (or
+draw a blip on) whichever pulse/ring band it falls within - turning the sweep
+from a pure instrument reading into a real "how many things, how close"
+readout. Good Lists material: iterate a list, compute something per item,
+draw conditionally.
+
+**Later, if still worth it when we get there:**
+- Module 9 (Dicts): differentiate blips by creature type via a lookup, without
+  fully identifying them - sonar tells you enough to decide, not everything.
+- Module 10/11 (Classes/Inheritance): each `Creature` subclass overrides how it
+  reads on sonar (a Leviathan pings very differently than plankton).
+
+Net effect by midterm: sonar says something's near -> decide whether it's
+worth the battery to close in and light it up -> once lit, scan/catalog it
+(Module 9's dict + discovered-species set). Built entirely from concepts the
+syllabus already covers, in order.
 
 ### Ownership migration - the long-term goal
 

@@ -21,9 +21,9 @@ METERS_PER_PERCENT = 20
 TICK_STEP = 100
 TICK_MAX = 2000
 
-RING_COUNT = 5
-RING_GAP = 28
-POWER_PER_RING = 20
+SONAR_RANGE_MAX = 400
+SWEEP_SECONDS = 2.5
+PULSE_COUNT = 4
 
 # --- BEGIN YOUR CODE (Checkpoint 4) -----------------------------------------
 
@@ -58,11 +58,11 @@ def draw_depth_ticks(screen, sub):
 
 
 def draw_sonar_rings(screen, sub):
-    rings = int(sub.power // POWER_PER_RING)
-    if rings > RING_COUNT:
-        rings = RING_COUNT
-    for i in range(1, rings + 1):
-        radius = i * RING_GAP
+    sonar_range = sub.power * (SONAR_RANGE_MAX / 100)
+    for i in range(PULSE_COUNT):
+        offset = i / PULSE_COUNT
+        fraction = (engine.now() / SWEEP_SECONDS + offset) % 1.0
+        radius = fraction * sonar_range
         engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
 
 # --- END YOUR CODE -----------------------------------------------------------

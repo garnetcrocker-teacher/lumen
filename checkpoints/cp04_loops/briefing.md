@@ -12,9 +12,10 @@ intake at the very bottom, and your five Checkpoint 3 functions just above it.
 This week the cockpit gets two new instruments, and both are actually *for*
 something, not just decoration: a **depth gauge** running down the right edge
 of the screen, color-coded by how dangerous each depth is (reusing last week's
-`hull_status`), and a **sonar display** - rings around the sub whose *count*
-tells you how much battery is left, the same way the light does. Both are
-drawn one piece at a time, with a loop.
+`hull_status`), and a long-range **sonar sweep** - pulses that continuously
+travel outward from the sub, much farther than your light reaches, so you get
+some awareness of what's out there before you're close enough to actually see
+it. Both are drawn one piece at a time, with a loop.
 
 ---
 
@@ -75,23 +76,30 @@ engine.draw_tick(screen, y, d, color)
 `OK_COLOR`, `CAUTION_COLOR`, and `BREACH_COLOR` are already defined for you at
 the top of the file - same colors the `HULL:` readout uses.
 
-### 4. `draw_sonar_rings(screen, sub)` - a `for` loop, capped by an `if`
+### 4. `draw_sonar_rings(screen, sub)` - a `for` loop, animated over time
 
-Sonar draws down the battery, the same as the light - so this isn't always
-`RING_COUNT` rings, it's *as many as you can currently afford*:
+Sonar reaches much farther than your light (`SONAR_RANGE_MAX = 400` pixels,
+versus the light's `155`), and instead of sitting still, a few pulses are
+always traveling outward and looping back - a real sonar ping, not a static
+picture. Range still depends on battery, same as the light:
 
 ```python
-rings = sub.power // POWER_PER_RING       # whole rings only
-if rings > RING_COUNT:
-    rings = RING_COUNT                     # RING_COUNT is the max, at full battery
+sonar_range = sub.power * (SONAR_RANGE_MAX / 100)   # 0 at dead battery, 400 at full
 
-for i in range(1, rings + 1):
-    radius = i * RING_GAP
+for i in range(PULSE_COUNT):
+    offset = i / PULSE_COUNT                  # 0, 0.25, 0.5, 0.75 for 4 pulses
+    fraction = (engine.now() / SWEEP_SECONDS + offset) % 1.0
+    radius = fraction * sonar_range
     engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
 ```
 
-At 100% power that's 5 rings. Below 20%, `rings` is `0` and `range(1, 1)` is
-empty - the loop just doesn't run. Sonar goes dark before your light does.
+`engine.now()` returns seconds since the game started, and it only ever counts
+up. Dividing by `SWEEP_SECONDS` and taking `% 1.0` turns that into a value
+that climbs from 0 to 1 and then starts over every `SWEEP_SECONDS` - that reset
+is what makes each pulse look like it travels out to `sonar_range` and then
+begins again at the sub, on a loop, forever. At `t = 0` with full battery the
+four pulses sit at radius `0, 100, 200, 300` - by `t = 1.25` (half a sweep)
+they've moved to `100, 150, 0, 50` (that last one already wrapped around).
 
 ---
 
@@ -99,13 +107,14 @@ empty - the loop just doesn't run. Sonar goes dark before your light does.
 
 Run `python main.py`. The pre-dive intake now rejects an out-of-range target
 depth (try `-5`, then `99999`, then `1200`) before the window opens. Once
-you're in: five rings should surround the sub at full battery, and the depth
-scale on the right should show green ticks near the surface, turning yellow
-past 1000 m and red past 1500 m (assuming a 1000 m rated hull). Hold **DOWN**
-and watch `POWER RANGE` drop as the battery drains - and watch the sonar rings
-disappear one at a time as `PWR` crosses each multiple of 20%, going dark
-completely below 20%. Confirm you can't descend once `PWR`, ballast, or `HULL`
-hits 0 - same gate as last week, now with hull added.
+you're in: four sonar pulses should be visibly expanding outward from the sub
+and looping back every couple of seconds, reaching much farther out than your
+light's cone. The depth scale on the right should show green ticks near the
+surface, turning yellow past 1000 m and red past 1500 m (assuming a 1000 m
+rated hull). Hold **DOWN** and watch `POWER RANGE` drop as the battery drains
+- and watch the sonar pulses reach less and less far as `PWR` drops toward 0.
+Confirm you can't descend once `PWR`, ballast, or `HULL` hits 0 - same gate as
+last week, now with hull added.
 
 ---
 
@@ -119,9 +128,9 @@ hits 0 - same gate as last week, now with hull added.
 - `draw_depth_ticks()` calls `engine.draw_tick` once per marker (`0` to
   `2000`), with the correct on-screen position **and** the correct color for
   each depth
-- `draw_sonar_rings()` calls `engine.draw_ring` the right number of times for
-  several different battery levels (100%, 45%, 20%, 15%), always centered on
-  the sub, with radius `28, 56, 84, 112, 140` in order
+- `draw_sonar_rings()` calls `engine.draw_ring` with the right radius for each
+  pulse, at several different combinations of battery level and time, always
+  centered on the sub
 
 Submit your `main.py` to Canvas. (Run `check.py` first to see your score - the
 grader runs the same check on the file you turn in.)
@@ -138,9 +147,10 @@ grader runs the same check on the file you turn in.)
   get drawn.
 - `draw_depth_ticks` needs an `if`/`elif`/`else` *inside* the `for` loop - one
   decision per depth, every time around.
-- `draw_sonar_rings`: the `if` that caps `rings` at `RING_COUNT` comes *before*
-  the loop, only once - not inside it. `sub.power // POWER_PER_RING` does the
-  floor-division for you; don't round it yourself.
+- `draw_sonar_rings`: `sonar_range` is computed once, before the loop - it
+  doesn't change per pulse, only `offset` and `fraction` do. Type the formula
+  exactly as given; the `%` (modulo) is what makes it wrap instead of growing
+  forever.
 - Both drawing functions return nothing. They just loop and draw.
 
 ## If you're stuck / joining late
