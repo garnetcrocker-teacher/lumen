@@ -95,9 +95,12 @@ the top of the file - same colors the `HULL:` readout uses.
 
 Sonar reaches much farther than your light (`SONAR_RANGE_MAX = 480` pixels,
 versus the light's `155`), and instead of sitting still, a few pulses are
-always slowly traveling outward and looping back - a real sonar ping, not a
-static picture. Range still depends on battery, same idea as the light: `0`
-pixels at dead battery, `SONAR_RANGE_MAX` at a full one.
+always slowly traveling outward, then resetting back to the sub and starting
+over - a real sonar ping, not a static picture. (They don't shrink back
+inward - each one just snaps back to radius `0` once it's traveled far
+enough, and grows out again from there.) Range still depends on battery,
+same idea as the light: `0` pixels at dead battery, `SONAR_RANGE_MAX` at a
+full one.
 
 Think of `engine.now()` as a stopwatch that starts at `0` when the game opens
 and never stops climbing. Getting from that number to one pulse's radius
@@ -149,9 +152,10 @@ depth (try `-5`, then `99999`, then `1200`). After you enter your dive plan,
 the terminal should count down out loud - `T-minus 5...` through `T-minus
 1...`, beeping each second (higher-pitched for the last 3), then `DIVE.` -
 before the window opens. Once you're in: four sonar pulses should be slowly,
-smoothly expanding outward from the sub and looping back every several
-seconds, reaching much farther out than your light's cone. The depth scale on
-the right should show green ticks near the surface, turning yellow past 1000
+smoothly expanding outward from the sub, each one resetting back to the
+center every several seconds (a snap back to radius 0, not a shrink), reaching
+much farther out than your light's cone. The depth scale on the right should
+show green ticks near the surface, turning yellow past 1000
 m and red past 1500 m (assuming a 1000 m rated hull). Leave the light on for
 a while and watch `PWR` drain - as it drops, the sonar pulses should start
 disappearing before they reach the edge of the screen instead of shrinking

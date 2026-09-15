@@ -104,14 +104,16 @@ def draw_depth_ticks(screen, sub):
 
 def draw_sonar_rings(screen, sub):
     """Sonar reaches much farther than your light, and it isn't a fixed
-    picture - a handful of pulses are always slowly traveling outward and
-    looping back, like a real active sonar ping. Range still depends on
-    battery, same idea as the light: 0 pixels at dead battery,
+    picture - a handful of pulses are always slowly traveling outward, then
+    resetting back to the sub and starting over, like a real active sonar
+    ping. (They don't shrink back inward - each one just restarts at 0 once
+    it's traveled far enough. More on that in step 2.) Range still depends
+    on battery, same idea as the light: 0 pixels at dead battery,
     SONAR_RANGE_MAX pixels at a full one.
 
     Think of engine.now() as a stopwatch that starts at 0 when the game
     opens and never stops climbing. Using that number to compute a pulse's current
-    radius takes four steps:
+    radius takes five steps:
 
     1. How far into ONE outward trip are we, ignoring any looping?
        engine.now() / SWEEP_SECONDS - this only ever grows: 0, 0.1, 0.5,
