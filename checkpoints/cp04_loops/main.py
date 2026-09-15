@@ -8,10 +8,7 @@ Module 4: Repetition Structures
 Your job this week is the FOUR functions in the YOUR CODE section below:
 read_valid_depth, countdown_to_dive, draw_depth_ticks, draw_sonar_rings.
 
-frame() and max_safe_depth() below your code are provided - nothing to
-change there. (max_safe_depth used to be a fifth function you wrote with a
-while loop, but it turned out to just be one multiplication - see its
-docstring for why it isn't a loop exercise.)
+frame() below your code is provided - nothing to change there.
 
 Checkpoints 2 and 3 are carried into the BOTTOM of this file:
   - Checkpoint 3's five functions (clamp_battery, hull_status, oxygen_state,
@@ -34,7 +31,6 @@ OK_COLOR = (90, 200, 150)      # same colors draw_hull_status() uses
 CAUTION_COLOR = (230, 190, 90)
 BREACH_COLOR = (230, 90, 80)
 
-METERS_PER_PERCENT = 20       # every 1 percent of battery is worth 20 m of descent
 TICK_STEP = 100               # draw a depth marker every this many meters
 TICK_MAX = 2000               # ... from 0 m down to this depth
 
@@ -114,13 +110,12 @@ def draw_sonar_rings(screen, sub):
     SONAR_RANGE_MAX pixels at a full one.
 
     Think of engine.now() as a stopwatch that starts at 0 when the game
-    opens and never stops climbing. Getting from that number to one pulse's
+    opens and never stops climbing. Using that number to compute a pulse's current
     radius takes four steps:
 
     1. How far into ONE outward trip are we, ignoring any looping?
        engine.now() / SWEEP_SECONDS - this only ever grows: 0, 0.1, 0.5,
-       1.0, 1.5, 2.3, and on forever. Each whole number is one full trip
-       finished.
+       1.0, 1.5, 2.3, and on forever. Each whole number is one full ping finished.
 
     2. Turn that endless growth into a repeating 0-to-1 cycle.
        Taking that value modulo 1 (`% 1.0`) throws away the whole-number
@@ -133,31 +128,23 @@ def draw_sonar_rings(screen, sub):
        other. Loop over range(PULSE_COUNT); for pulse i, add i / PULSE_COUNT
        (0, 0.25, 0.5, 0.75 for 4 pulses) before taking % 1.0.
 
-    4. Turn that 0-to-1 "how far along" number into an actual pixel radius
-       by multiplying it by this frame's sonar_range.
+    4. Turn that 0-to-1 "how far along" number into a pixel radius by
+       multiplying it by SONAR_RANGE_MAX - this is the pulse's true
+       position. It always travels at the same speed; battery doesn't slow
+       it down, only shortens how far you can still detect it (next step).
 
-    Draw each pulse centered on the sub with:
+    5. Only draw the pulse if that radius is within THIS FRAME's
+       battery-scaled sonar_range (sub.power * (SONAR_RANGE_MAX / 100)).
+       Past that point the ping is still out there, traveling at the same
+       speed as always - your equipment just can't pick it up yet, so skip
+       drawing it rather than showing it at some shrunken radius.
+
+    Draw each visible pulse centered on the sub with:
         engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
     """
     pass
 
 # --- END YOUR CODE -----------------------------------------------------------
-
-
-def max_safe_depth(start_power):
-    """Provided - not something you write this week.
-
-    How many whole meters of descent `start_power` percent of battery buys:
-    every 1 percent is worth METERS_PER_PERCENT meters. An earlier version of
-    this checkpoint had you compute this with a while loop, spending the
-    battery down 1 percent at a time - but that's really just one
-    multiplication wearing a loop as a costume, so we just give it to you.
-    (This is also a real design skill: not every repeated-sounding idea
-    actually needs a loop. The four loops you do write this week -
-    read_valid_depth, countdown_to_dive, draw_depth_ticks, and
-    draw_sonar_rings - all genuinely need one.)
-    """
-    return int(start_power) * METERS_PER_PERCENT
 
 
 def frame(sub, screen):
@@ -183,10 +170,6 @@ def frame(sub, screen):
         alert_color = (90, 200, 150)
     engine.draw_hud_text(f"STATUS: {alert}", (engine.WIDTH // 2, 66), size=14,
                          anchor="midtop", color=alert_color)
-
-    engine.draw_hud_text(f"POWER RANGE: {max_safe_depth(sub.power)} m",
-                         (engine.WIDTH // 2, 86), size=13, anchor="midtop",
-                         color=(120, 170, 190))
 
     if engine.key_down("DOWN") and can_descend(sub.ballast, sub.power, sub.hull):
         sub.descending = True

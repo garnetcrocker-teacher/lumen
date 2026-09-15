@@ -223,17 +223,22 @@ worth the battery to close in and light it up -> once lit, scan/catalog it
 (Module 9's dict + discovered-species set). Built entirely from concepts the
 syllabus already covers, in order.
 
-### cp04 revision: max_safe_depth cut, countdown_to_dive added, sonar slowed down
+### cp04 revision: max_safe_depth deleted, countdown_to_dive added, sonar physics fixed
 
-Three review passes after the first cp04 draft, based on direct feedback:
+Four review passes after the first cp04 draft, based on direct feedback:
 
-- **`max_safe_depth` is no longer a student function.** It was a `while`
-  loop spending battery down 1% at a time to compute
-  `start_power * METERS_PER_PERCENT` - a real value, but a fake loop (one
-  multiplication doesn't need repetition). It's now provided code, with a
-  docstring that says so directly - deliberately using the cut as a teaching
-  moment about recognizing when a loop is the wrong tool, not hiding it.
-- **`countdown_to_dive(seconds)` replaces it** as the fourth function: a
+- **`max_safe_depth` and its `POWER RANGE` HUD readout are gone entirely -
+  not just demoted to provided code.** It was first cut as a student `while`
+  loop for being a fake loop (`start_power * METERS_PER_PERCENT` is one
+  multiplication, no repetition needed) and kept as provided code for one
+  revision - but a further question ("what's the actual relationship
+  between battery and depth here?") exposed that there isn't one: battery
+  in this sim only drains while the light is on (`_update_systems` in
+  `engine.py`), never from depth. The readout wasn't an arbitrary constant
+  standing in for something real, it was describing a mechanic that flatly
+  doesn't exist. Provided-but-fictional was worse than not having it, so it
+  was deleted outright, HUD line included.
+- **`countdown_to_dive(seconds)` fills the vacated fourth-function slot**: a
   `while` loop with an `if`/`else` inside it (Module 3 review layered into
   Module 4), printing a `T-minus ...` launch sequence and beeping through two
   new `engine.py` helpers, `play_tone(freq_hz, ms)` and `wait(seconds)`.
@@ -247,12 +252,22 @@ Three review passes after the first cp04 draft, based on direct feedback:
   should outrange the light more" feedback. At the current values a pulse
   resets once every 4 seconds (`SWEEP_SECONDS / PULSE_COUNT`) instead of
   every 0.625s originally.
-- **Hint style**: `draw_sonar_rings`'s docstring/briefing section is written
-  as an explicit 4-step "why" walkthrough (what dividing by `SWEEP_SECONDS`
-  means, why `% 1.0` is needed, why the per-pulse offset, why multiply by
-  range) rather than one dense paragraph - this was flagged as the most
-  likely function to genuinely confuse students, so it gets the most
-  scaffolding of the four despite the Tier 1 "prose, not literal code" rule.
+- **Sonar physics fix - speed decoupled from battery.** The original formula
+  was `radius = fraction * sonar_range`, where `fraction` cycles 0->1 on a
+  fixed `SWEEP_SECONDS` clock regardless of battery. That means a pulse
+  covers less distance in the same time as `sonar_range` shrinks - i.e. it
+  visibly slows down as the battery drains, which was flagged as physically
+  wrong (a sonar ping doesn't travel slower because your receiver is
+  weaker). Fix: compute the pulse's true position at constant speed
+  (`radius = fraction * SONAR_RANGE_MAX`, never scaled by battery), then
+  only draw it `if radius <= sonar_range` - low battery now means pulses
+  vanish from view partway out instead of crawling. This directly touched
+  the student-facing docstring (added as its step 5) even though the
+  instructor had just hand-edited that docstring's steps 1-3 and asked that
+  it not be changed again - resolved by asking first rather than overwriting
+  silently, since the two instructions were in direct conflict. `check.py`'s
+  sonar test now expects a *subset* of the 4 pulses per frame (only the ones
+  currently within `sonar_range`), not always all 4.
 
 ### Ownership migration - the long-term goal
 

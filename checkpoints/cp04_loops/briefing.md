@@ -20,11 +20,13 @@ reaches, so you get some awareness of what's out there before you're close
 enough to actually see it. All three are built with a loop.
 
 (An earlier version of this checkpoint had a fourth function,
-`max_safe_depth`, computed with a `while` loop that spent battery down one
-percent at a time. That's really just `start_power * METERS_PER_PERCENT` in
-disguise - one multiplication, not a loop - so it's now provided code instead
-of something you write. Knowing when a loop is the wrong tool is as much a
-part of Module 4 as writing one.)
+`max_safe_depth`, and a `POWER RANGE` readout built from it - "how many
+meters you can dive before the battery dies." It's gone now: it turned out
+to be pure fiction. Battery in this game only drains while the light is on
+(check `engine.py`'s `_update_systems` if you want proof); it never drains
+from depth. So the stat wasn't describing a made-up conversion rate, it was
+describing a mechanic that doesn't exist. Better to cut it than keep a
+number that lies to the pilot.)
 
 ---
 
@@ -33,8 +35,8 @@ part of Module 4 as writing one.)
 Open `main.py`. Fill in the four functions between `BEGIN YOUR CODE
 (Checkpoint 4)` and `END YOUR CODE`. Don't change the `def` lines.
 
-> Below your code: `frame()` and `max_safe_depth()` are provided (nothing to
-> change there), then a **Checkpoint 3 (carried over)** section with working
+> Below your code: `frame()` is provided (nothing to change there), then a
+> **Checkpoint 3 (carried over)** section with working
 > reference versions of all five of last week's functions, then a
 > **Checkpoint 2 (carried over)** section with the pre-dive intake. If you did
 > those checkpoints, paste your own versions in over the references. One
@@ -99,7 +101,7 @@ pixels at dead battery, `SONAR_RANGE_MAX` at a full one.
 
 Think of `engine.now()` as a stopwatch that starts at `0` when the game opens
 and never stops climbing. Getting from that number to one pulse's radius
-takes four steps:
+takes five steps:
 
 1. **How far into one outward trip are we, ignoring any looping?**
    `engine.now() / SWEEP_SECONDS` - this only ever grows: `0, 0.1, 0.5, 1.0,
@@ -113,15 +115,30 @@ takes four steps:
    `PULSE_COUNT` pulses end up spread out instead of stacked on each other.
    Loop over `range(PULSE_COUNT)`; for pulse `i`, add `i / PULSE_COUNT` (`0,
    0.25, 0.5, 0.75` for 4 pulses) before taking `% 1.0`.
-4. **Turn that `0`-to-`1` "how far along" number into an actual pixel
-   radius** by multiplying it by this frame's `sonar_range`.
+4. **Turn that `0`-to-`1` "how far along" number into a pixel radius** by
+   multiplying it by `SONAR_RANGE_MAX` - this is the pulse's *true*
+   position. It always travels at the same speed; battery doesn't slow it
+   down, only shortens how far you can still detect it (next step).
+5. **Only draw the pulse if that radius is within this frame's
+   battery-scaled `sonar_range`** (`sub.power * (SONAR_RANGE_MAX / 100)`).
+   Past that point the ping is still out there, traveling at the same speed
+   as always - your equipment just can't pick it up yet, so skip drawing it
+   rather than showing it at some shrunken radius.
 
-Draw each pulse centered on the sub with
+Draw each visible pulse centered on the sub with
 `engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)`.
 
-Worked example, full battery: at `t = 0` the four pulses sit at radius `0,
+Worked example, full battery (`sonar_range` equals `SONAR_RANGE_MAX`, so
+every pulse is always visible): at `t = 0` the four pulses sit at radius `0,
 120, 240, 360` - by `t = 8.0` (half a sweep) they've moved to `240, 360, 0,
 120` (the third one already wrapped back around to `0`).
+
+At lower battery, `sonar_range` shrinks below `SONAR_RANGE_MAX`, so some
+pulses will be traveling *past* what you can currently detect at any given
+moment - step 5 is what makes those simply not get drawn that frame, rather
+than bunching up at a shrunken edge. Expect anywhere from `0` to
+`PULSE_COUNT` pulses visible at once, depending on where each one happens to
+be in its trip.
 
 ---
 
@@ -135,9 +152,11 @@ before the window opens. Once you're in: four sonar pulses should be slowly,
 smoothly expanding outward from the sub and looping back every several
 seconds, reaching much farther out than your light's cone. The depth scale on
 the right should show green ticks near the surface, turning yellow past 1000
-m and red past 1500 m (assuming a 1000 m rated hull). Hold **DOWN** and watch
-`POWER RANGE` drop as the battery drains - and watch the sonar pulses reach
-less and less far as `PWR` drops toward 0. Confirm you can't descend once
+m and red past 1500 m (assuming a 1000 m rated hull). Leave the light on for
+a while and watch `PWR` drain - as it drops, the sonar pulses should start
+disappearing before they reach the edge of the screen instead of shrinking
+in toward the sub; they're still moving at the same speed, your instrument
+just can't detect them that far out anymore. Confirm you can't descend once
 `PWR`, ballast, or `HULL` hits 0 - same gate as last week, now with hull
 added.
 
@@ -154,9 +173,10 @@ added.
 - `draw_depth_ticks()` calls `engine.draw_tick` once per marker (`0` to
   `2000`), with the correct on-screen position **and** the correct color for
   each depth
-- `draw_sonar_rings()` calls `engine.draw_ring` with the right radius for each
-  pulse, at several different combinations of battery level and time, always
-  centered on the sub
+- `draw_sonar_rings()` calls `engine.draw_ring` with the right radius for
+  each *currently visible* pulse (some may be out of range and correctly not
+  drawn), at several different combinations of battery level and time,
+  always centered on the sub
 
 Submit your `main.py` to Canvas. (Run `check.py` first to see your score - the
 grader runs the same check on the file you turn in.)
@@ -180,6 +200,10 @@ grader runs the same check on the file you turn in.)
 - If your pulses never seem to reset, double check you're taking `% 1.0` of
   the whole `(engine.now() / SWEEP_SECONDS + offset)` expression, not just
   part of it.
+- Multiply by `SONAR_RANGE_MAX` to get a pulse's radius, *not* `sonar_range`
+  - `sonar_range` only comes in for the visibility check (step 5). Mixing
+  the two up is what makes pulses speed up and slow down as the battery
+  drains, instead of just fading from view at a shorter distance.
 - All three drawing/countdown functions return nothing. They just loop
   (and print, or draw).
 

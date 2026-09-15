@@ -188,12 +188,18 @@ def main():
     PULSE_COUNT = 4
 
     def expected_radii(power, t):
+        """Only the pulses currently within battery-scaled range are
+        visible - a pulse still travels at a constant speed (radius =
+        fraction * SONAR_RANGE_MAX) no matter the battery, it just isn't
+        drawn once it's traveled past what this frame's battery can detect."""
         sonar_range = power * (SONAR_RANGE_MAX / 100)
         out = []
         for i in range(PULSE_COUNT):
             offset = i / PULSE_COUNT
             fraction = (t / SWEEP_SECONDS + offset) % 1.0
-            out.append(fraction * sonar_range)
+            radius = fraction * SONAR_RANGE_MAX
+            if radius <= sonar_range:
+                out.append(radius)
         return out
 
     expected_center = (engine.WIDTH // 2, engine.SUB_SCREEN_Y)
@@ -230,7 +236,7 @@ def main():
     check("draw_sonar_rings centers every pulse on the sub",
           centers_ok, f"expected center {expected_center}")
 
-    for power, t in [(50, 8.0), (0, 3.84), (100, 16.0)]:
+    for power, t in [(50, 5.0), (0, 3.0), (100, 16.0)]:
         try:
             exp = expected_radii(power, t)
             got = [r for _, r in rings_for(power, t)]

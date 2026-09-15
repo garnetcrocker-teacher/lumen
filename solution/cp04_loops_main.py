@@ -17,7 +17,6 @@ OK_COLOR = (90, 200, 150)
 CAUTION_COLOR = (230, 190, 90)
 BREACH_COLOR = (230, 90, 80)
 
-METERS_PER_PERCENT = 20
 TICK_STEP = 100
 TICK_MAX = 2000
 
@@ -74,14 +73,11 @@ def draw_sonar_rings(screen, sub):
     for i in range(PULSE_COUNT):
         offset = i / PULSE_COUNT
         fraction = (engine.now() / SWEEP_SECONDS + offset) % 1.0
-        radius = fraction * sonar_range
-        engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
+        radius = fraction * SONAR_RANGE_MAX
+        if radius <= sonar_range:
+            engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
 
 # --- END YOUR CODE -----------------------------------------------------------
-
-
-def max_safe_depth(start_power):
-    return int(start_power) * METERS_PER_PERCENT
 
 
 def frame(sub, screen):
@@ -104,10 +100,6 @@ def frame(sub, screen):
         alert_color = (90, 200, 150)
     engine.draw_hud_text(f"STATUS: {alert}", (engine.WIDTH // 2, 66), size=14,
                          anchor="midtop", color=alert_color)
-
-    engine.draw_hud_text(f"POWER RANGE: {max_safe_depth(sub.power)} m",
-                         (engine.WIDTH // 2, 86), size=13, anchor="midtop",
-                         color=(120, 170, 190))
 
     if engine.key_down("DOWN") and can_descend(sub.ballast, sub.power, sub.hull):
         sub.descending = True
