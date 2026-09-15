@@ -9,9 +9,10 @@ If your instructor posts a newer engine.py, replace this whole file with it and
 make sure ENGINE_VERSION below matches what the assignment says.
 """
 
+import array
+import math
 import os
 import json
-import math
 import random
 
 ENGINE_VERSION = "1.0"
@@ -70,6 +71,50 @@ def dt():
 def now():
     """Seconds since the game started."""
     return _state.t
+
+
+# ---------------------------------------------------------------------------
+# Sound - tiny synthesized beeps, no sound files needed.
+# ---------------------------------------------------------------------------
+_MIXER_READY = False
+
+
+def _ensure_mixer():
+    global _MIXER_READY
+    if _MIXER_READY:
+        return
+    try:
+        pygame.mixer.init(frequency=22050, size=-16, channels=1)
+    except pygame.error:
+        pass
+    _MIXER_READY = True
+
+
+def play_tone(freq_hz=440, ms=150, volume=0.35):
+    """Play a short synthesized beep at freq_hz Hz for ms milliseconds.
+    Silent (and safe to call) in headless/check.py mode, and safe to call
+    even if the machine has no audio device."""
+    if HEADLESS:
+        return
+    _ensure_mixer()
+    rate = 22050
+    n = int(rate * ms / 1000)
+    amp = int(32767 * volume)
+    samples = array.array("h", (
+        int(amp * math.sin(2 * math.pi * freq_hz * i / rate)) for i in range(n)
+    ))
+    try:
+        pygame.mixer.Sound(buffer=samples).play()
+    except pygame.error:
+        pass
+
+
+def wait(seconds):
+    """Pause for `seconds` seconds - used for the pre-dive countdown, before
+    the window opens. Does nothing in headless/check.py mode."""
+    if HEADLESS:
+        return
+    pygame.time.wait(int(seconds * 1000))
 
 
 # ---------------------------------------------------------------------------

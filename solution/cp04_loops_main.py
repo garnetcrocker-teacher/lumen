@@ -21,9 +21,17 @@ METERS_PER_PERCENT = 20
 TICK_STEP = 100
 TICK_MAX = 2000
 
-SONAR_RANGE_MAX = 400
-SWEEP_SECONDS = 8.0
+SONAR_RANGE_MAX = 480
+SWEEP_SECONDS = 16.0
 PULSE_COUNT = 4
+
+DIVE_COUNTDOWN = 5
+BEEP_FREQ = 440
+BEEP_MS = 150
+URGENT_THRESHOLD = 3
+URGENT_FREQ = 660
+DIVE_FREQ = 220
+DIVE_MS = 400
 
 # --- BEGIN YOUR CODE (Checkpoint 4) -----------------------------------------
 
@@ -35,13 +43,17 @@ def read_valid_depth():
     return depth
 
 
-def max_safe_depth(start_power):
-    power = start_power
-    depth = 0
-    while power >= 1:
-        power -= 1
-        depth += METERS_PER_PERCENT
-    return depth
+def countdown_to_dive(seconds):
+    while seconds > 0:
+        print(f"T-minus {seconds}...")
+        if seconds <= URGENT_THRESHOLD:
+            engine.play_tone(URGENT_FREQ, BEEP_MS)
+        else:
+            engine.play_tone(BEEP_FREQ, BEEP_MS)
+        engine.wait(1)
+        seconds -= 1
+    print("DIVE.")
+    engine.play_tone(DIVE_FREQ, DIVE_MS)
 
 
 def draw_depth_ticks(screen, sub):
@@ -66,6 +78,10 @@ def draw_sonar_rings(screen, sub):
         engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
 
 # --- END YOUR CODE -----------------------------------------------------------
+
+
+def max_safe_depth(start_power):
+    return int(start_power) * METERS_PER_PERCENT
 
 
 def frame(sub, screen):
@@ -165,4 +181,6 @@ if __name__ == "__main__":
     engine.save_diveplan(pilot, target_depth, ballast_kg, battery_pct)
     # ============ end Checkpoint 2 ============
 
+    print()
+    countdown_to_dive(DIVE_COUNTDOWN)
     engine.run(frame)

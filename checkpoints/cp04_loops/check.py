@@ -1,7 +1,8 @@
 """
 Checkpoint 4 auto-check.   Run:  python check.py
 
-Imports the four functions from main.py and exercises their loops.
+Imports the four functions from main.py (read_valid_depth, countdown_to_dive,
+draw_depth_ticks, draw_sonar_rings) and exercises their loops.
 No window opens. Paste the final score into Canvas.
 """
 
@@ -13,7 +14,7 @@ import sys
 
 os.environ["LUMEN_HEADLESS"] = "1"
 
-TOTAL_CHECKS = 19
+TOTAL_CHECKS = 20
 
 results = []
 
@@ -68,7 +69,7 @@ def main():
         print(f"  [FAIL] could not import main.py: {exc!r}")
         return _report(0, TOTAL_CHECKS)
 
-    needed = ("read_valid_depth", "max_safe_depth", "draw_depth_ticks", "draw_sonar_rings")
+    needed = ("read_valid_depth", "countdown_to_dive", "draw_depth_ticks", "draw_sonar_rings")
     for fn in needed:
         if not hasattr(student, fn):
             print(f"  [FAIL] main.py has no function called {fn}()")
@@ -100,14 +101,53 @@ def main():
         for lbl in ("low boundary", "high boundary", "just over the top"):
             check(f"read_valid_depth {lbl}", False, repr(exc))
 
-    # --- max_safe_depth ------------------------------------------------------
-    for arg, expected in [(100, 2000), (50, 1000), (2, 40), (1, 20), (0, 0)]:
+    # --- countdown_to_dive -----------------------------------------------------
+    BEEP_FREQ = 440
+    BEEP_MS = 150
+    URGENT_THRESHOLD = 3
+    URGENT_FREQ = 660
+    DIVE_FREQ = 220
+    DIVE_MS = 400
+
+    def expected_countdown_text(seconds):
+        lines = [f"T-minus {s}..." for s in range(seconds, 0, -1)]
+        lines.append("DIVE.")
+        return "\n".join(lines) + "\n"
+
+    def expected_countdown_tones(seconds):
+        tones = [(URGENT_FREQ, BEEP_MS) if s <= URGENT_THRESHOLD else (BEEP_FREQ, BEEP_MS)
+                  for s in range(seconds, 0, -1)]
+        tones.append((DIVE_FREQ, DIVE_MS))
+        return tones
+
+    def call_countdown(seconds):
+        real_tone = engine.play_tone
+        real_wait = engine.wait
+        tone_calls, wait_calls = [], []
+        engine.play_tone = lambda freq=440, ms=150, volume=0.35: tone_calls.append((freq, ms))
+        engine.wait = lambda s: wait_calls.append(s)
+        buf = io.StringIO()
         try:
-            got = student.max_safe_depth(arg)
-            check(f"max_safe_depth({arg}) -> {expected}",
-                  got == expected and type(got) is int, f"got {got!r}")
+            with contextlib.redirect_stdout(buf):
+                student.countdown_to_dive(seconds)
+        finally:
+            engine.play_tone = real_tone
+            engine.wait = real_wait
+        return buf.getvalue(), tone_calls, wait_calls
+
+    for seconds in (5, 2):
+        try:
+            text, tones, waits = call_countdown(seconds)
+            check(f"countdown_to_dive({seconds}) prints the T-minus lines then DIVE.",
+                  text == expected_countdown_text(seconds), f"got {text!r}")
+            check(f"countdown_to_dive({seconds}) beeps normally then urgently for "
+                  f"the last {URGENT_THRESHOLD}, then plays the dive tone",
+                  tones == expected_countdown_tones(seconds), f"got {tones}")
+            check(f"countdown_to_dive({seconds}) pauses once per second ({seconds} waits)",
+                  waits == [1] * seconds, f"got {waits}")
         except Exception as exc:
-            check(f"max_safe_depth({arg})", False, repr(exc))
+            for lbl in ("prints the right lines", "plays the right beeps", "pauses once per second"):
+                check(f"countdown_to_dive({seconds}) {lbl}", False, repr(exc))
 
     # --- draw_depth_ticks ------------------------------------------------------
     seen = []
@@ -143,8 +183,8 @@ def main():
     # --- draw_sonar_rings ------------------------------------------------------
     # Independent copy of the expected formula - freezes engine.now() to a known
     # value so the animation is fully deterministic for testing.
-    SONAR_RANGE_MAX = 400
-    SWEEP_SECONDS = 8.0
+    SONAR_RANGE_MAX = 480
+    SWEEP_SECONDS = 16.0
     PULSE_COUNT = 4
 
     def expected_radii(power, t):
@@ -190,7 +230,7 @@ def main():
     check("draw_sonar_rings centers every pulse on the sub",
           centers_ok, f"expected center {expected_center}")
 
-    for power, t in [(50, 4.0), (0, 1.92), (100, 8.0)]:
+    for power, t in [(50, 8.0), (0, 3.84), (100, 16.0)]:
         try:
             exp = expected_radii(power, t)
             got = [r for _, r in rings_for(power, t)]

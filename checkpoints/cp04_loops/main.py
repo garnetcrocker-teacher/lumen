@@ -5,10 +5,13 @@ Module 4: Repetition Structures
     Run the game:      python main.py      (press ESC or close the window to quit)
     Check your work:    python check.py
 
-Your job this week is the FOUR functions in the YOUR CODE section below.
+Your job this week is the FOUR functions in the YOUR CODE section below:
+read_valid_depth, countdown_to_dive, draw_depth_ticks, draw_sonar_rings.
 
-frame() below your code is provided - the engine calls it every frame, nothing
-to change there.
+frame() and max_safe_depth() below your code are provided - nothing to
+change there. (max_safe_depth used to be a fifth function you wrote with a
+while loop, but it turned out to just be one multiplication - see its
+docstring for why it isn't a loop exercise.)
 
 Checkpoints 2 and 3 are carried into the BOTTOM of this file:
   - Checkpoint 3's five functions (clamp_battery, hull_status, oxygen_state,
@@ -35,11 +38,19 @@ METERS_PER_PERCENT = 20       # every 1 percent of battery is worth 20 m of desc
 TICK_STEP = 100               # draw a depth marker every this many meters
 TICK_MAX = 2000               # ... from 0 m down to this depth
 
-SONAR_RANGE_MAX = 400         # how far sonar reaches, in pixels, at full battery
+SONAR_RANGE_MAX = 480         # how far sonar reaches, in pixels, at full battery
                                # (compare: the light only reaches 155 - sonar
                                # is your long-range sense, light is close-range detail)
-SWEEP_SECONDS = 8.0           # how long one ping takes to travel out to max range
+SWEEP_SECONDS = 16.0          # how long one ping takes to travel out to max range
 PULSE_COUNT = 4               # how many pulses are traveling outward at once
+
+DIVE_COUNTDOWN = 5            # seconds counted down before the dive begins
+BEEP_FREQ = 440               # ordinary countdown beep, in Hz
+BEEP_MS = 150                 # ... and how long it lasts, in milliseconds
+URGENT_THRESHOLD = 3          # T-minus this many seconds or fewer -> urgent beep
+URGENT_FREQ = 660             # higher-pitched beep for the last few seconds
+DIVE_FREQ = 220               # low tone played once, at "DIVE."
+DIVE_MS = 400
 
 # --- BEGIN YOUR CODE (Checkpoint 4) -----------------------------------------
 
@@ -51,24 +62,29 @@ def read_valid_depth():
     and ask again. Keep looping until the number is in range, then return it
     as an int.
 
-    Use a while loop. (Assume the pilot types digits - handling bad text like
-    "abc" comes in Module 6.)
+    Use a while loop. (Assume the pilot types digits.)
     """
     return 0
 
 
-def max_safe_depth(start_power):
-    """Return how many whole meters the sub can descend before the battery dies.
+def countdown_to_dive(seconds):
+    """Count down out loud before the dive begins - a launch sequence, not
+    just a delay.
 
-    Start at depth 0 with `start_power` percent of battery. Using a while loop,
-    for as long as there is at least 1 whole percent of power left, spend
-    1 percent and go METERS_PER_PERCENT meters deeper. Return the depth
-    reached, as an int.
+    From `seconds` down to 1, once per number:
+        - print(f"T-minus {seconds}...")
+        - play a beep: engine.play_tone(BEEP_FREQ, BEEP_MS) normally, but
+          engine.play_tone(URGENT_FREQ, BEEP_MS) instead once `seconds` is
+          URGENT_THRESHOLD or less (the last few seconds sound more urgent)
+        - engine.wait(1) to pause one second
+        - subtract 1 from `seconds`
 
-    Examples:  max_safe_depth(100) -> 2000     max_safe_depth(1) -> 20
-               max_safe_depth(2)   -> 40       max_safe_depth(0) -> 0
+    Once the count reaches 0, print("DIVE.") and play the longer launch tone:
+    engine.play_tone(DIVE_FREQ, DIVE_MS).
+
+    Use a while loop, with an if/else inside it to pick the beep.
     """
-    return 0
+    pass
 
 
 def draw_depth_ticks(screen, sub):
@@ -92,32 +108,56 @@ def draw_depth_ticks(screen, sub):
 
 def draw_sonar_rings(screen, sub):
     """Sonar reaches much farther than your light, and it isn't a fixed
-    picture - a handful of pulses are always traveling outward and looping
-    back, like a real active sonar ping. Range still depends on battery, same
-    as the light: 0 pixels at dead battery, SONAR_RANGE_MAX pixels at a full
-    one.
+    picture - a handful of pulses are always slowly traveling outward and
+    looping back, like a real active sonar ping. Range still depends on
+    battery, same idea as the light: 0 pixels at dead battery,
+    SONAR_RANGE_MAX pixels at a full one.
 
-    Loop over range(PULSE_COUNT) so each pulse gets its own iteration i. All
-    the pulses travel at the same speed, but they don't start at the same
-    point along their trip - spread their starting points evenly across the
-    0-1 range using i / PULSE_COUNT.
+    Think of engine.now() as a stopwatch that starts at 0 when the game
+    opens and never stops climbing. Getting from that number to one pulse's
+    radius takes four steps:
 
-    A pulse's position is a fraction from 0 (just leaving the sub) to 1
-    (reached max range). engine.now() gives seconds since the game started
-    and only ever increases, so dividing it by SWEEP_SECONDS and adding a
-    pulse's own starting point gives a number that climbs forever. Taking
-    that value modulo 1 (`% 1.0`) is what turns an endless climb into
-    something that goes 0 -> 1 -> 0 -> 1 ..., once every SWEEP_SECONDS -
-    without it, a pulse would just fly off past the edge of the screen
-    instead of looping back to the sub.
+    1. How far into ONE outward trip are we, ignoring any looping?
+       engine.now() / SWEEP_SECONDS - this only ever grows: 0, 0.1, 0.5,
+       1.0, 1.5, 2.3, and on forever. Each whole number is one full trip
+       finished.
 
-    Once you have that 0-1 fraction for a pulse, its radius is that fraction
-    of this frame's sonar range. Draw each pulse centered on the sub with
-    engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius).
+    2. Turn that endless growth into a repeating 0-to-1 cycle.
+       Taking that value modulo 1 (`% 1.0`) throws away the whole-number
+       part and keeps only what's left over - 2.3 % 1.0 is 0.3. That's the
+       trick that makes a pulse restart at the sub every SWEEP_SECONDS
+       instead of flying off past the edge of the screen forever.
+
+    3. Give each pulse its own starting point in that cycle, so all
+       PULSE_COUNT pulses end up spread out instead of stacked on each
+       other. Loop over range(PULSE_COUNT); for pulse i, add i / PULSE_COUNT
+       (0, 0.25, 0.5, 0.75 for 4 pulses) before taking % 1.0.
+
+    4. Turn that 0-to-1 "how far along" number into an actual pixel radius
+       by multiplying it by this frame's sonar_range.
+
+    Draw each pulse centered on the sub with:
+        engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
     """
     pass
 
 # --- END YOUR CODE -----------------------------------------------------------
+
+
+def max_safe_depth(start_power):
+    """Provided - not something you write this week.
+
+    How many whole meters of descent `start_power` percent of battery buys:
+    every 1 percent is worth METERS_PER_PERCENT meters. An earlier version of
+    this checkpoint had you compute this with a while loop, spending the
+    battery down 1 percent at a time - but that's really just one
+    multiplication wearing a loop as a costume, so we just give it to you.
+    (This is also a real design skill: not every repeated-sounding idea
+    actually needs a loop. The four loops you do write this week -
+    read_valid_depth, countdown_to_dive, draw_depth_ticks, and
+    draw_sonar_rings - all genuinely need one.)
+    """
+    return int(start_power) * METERS_PER_PERCENT
 
 
 def frame(sub, screen):
@@ -230,4 +270,6 @@ if __name__ == "__main__":
     engine.save_diveplan(pilot, target_depth, ballast_kg, battery_pct)
     # ============ end Checkpoint 2 ============
 
+    print()
+    countdown_to_dive(DIVE_COUNTDOWN)                                   # NEW this week
     engine.run(frame)      # launch the dive with the plan you just entered

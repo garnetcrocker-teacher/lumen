@@ -1,7 +1,7 @@
-# Checkpoint 4 - Depth Gauge, Sonar, and Battery Range
+# Checkpoint 4 - Launch Countdown, Depth Gauge, and Sonar
 
 **Module 4: Repetition Structures**
-**Concepts:** `while` loops, `for` loops with `range()`, input validation loops, accumulators, augmented assignment (`-=`, `+=`)
+**Concepts:** `while` loops, `for` loops with `range()`, input validation loops, an `if`/`else` inside a loop, augmented assignment (`-=`, `+=`)
 
 ---
 
@@ -9,13 +9,22 @@
 
 Checkpoints 2 and 3 are carried into this week's `main.py` - the pre-dive
 intake at the very bottom, and your five Checkpoint 3 functions just above it.
-This week the cockpit gets two new instruments, and both are actually *for*
-something, not just decoration: a **depth gauge** running down the right edge
-of the screen, color-coded by how dangerous each depth is (reusing last week's
-`hull_status`), and a long-range **sonar sweep** - a few pulses that slowly and
-continuously travel outward from the sub, much farther than your light
+This week adds a launch countdown before the dive begins, plus two new cockpit
+instruments once you're in the water, and none of it is just decoration: a
+**countdown** that counts down out loud and beeps before the window even
+opens, a **depth gauge** running down the right edge of the screen,
+color-coded by how dangerous each depth is (reusing last week's
+`hull_status`), and a long-range **sonar sweep** - a few pulses that slowly
+and continuously travel outward from the sub, much farther than your light
 reaches, so you get some awareness of what's out there before you're close
-enough to actually see it. Both are drawn one piece at a time, with a loop.
+enough to actually see it. All three are built with a loop.
+
+(An earlier version of this checkpoint had a fourth function,
+`max_safe_depth`, computed with a `while` loop that spent battery down one
+percent at a time. That's really just `start_power * METERS_PER_PERCENT` in
+disguise - one multiplication, not a loop - so it's now provided code instead
+of something you write. Knowing when a loop is the wrong tool is as much a
+part of Module 4 as writing one.)
 
 ---
 
@@ -24,13 +33,14 @@ enough to actually see it. Both are drawn one piece at a time, with a loop.
 Open `main.py`. Fill in the four functions between `BEGIN YOUR CODE
 (Checkpoint 4)` and `END YOUR CODE`. Don't change the `def` lines.
 
-> Below your code: `frame()` is provided (uses everything, including your new
-> functions - nothing to change there), then a **Checkpoint 3 (carried over)**
-> section with working reference versions of all five of last week's functions,
-> then a **Checkpoint 2 (carried over)** section with the pre-dive intake. If
-> you did those checkpoints, paste your own versions in over the references.
-> One small wiring change either way: the pre-dive intake's target-depth line
-> now calls this week's `read_valid_depth()` instead of a plain `int(input())`.
+> Below your code: `frame()` and `max_safe_depth()` are provided (nothing to
+> change there), then a **Checkpoint 3 (carried over)** section with working
+> reference versions of all five of last week's functions, then a
+> **Checkpoint 2 (carried over)** section with the pre-dive intake. If you did
+> those checkpoints, paste your own versions in over the references. One
+> small wiring change either way: the pre-dive intake's target-depth line now
+> calls this week's `read_valid_depth()` instead of a plain `int(input())`,
+> and right before launch it now calls your new `countdown_to_dive()`.
 
 ### 1. `read_valid_depth()` - a validation `while` loop
 
@@ -40,21 +50,28 @@ Open `main.py`. Fill in the four functions between `BEGIN YOUR CODE
 - Loop until the number is in range, then `return` it as an `int`.
 - Assume the pilot types digits. (Bad text like `"abc"` is a Module 6 problem.)
 
-### 2. `max_safe_depth(start_power)` - an accumulator `while` loop
+### 2. `countdown_to_dive(seconds)` - a `while` loop with a decision inside it
 
-- Start at depth `0` with `start_power` percent of battery.
-- `METERS_PER_PERCENT` is already defined (`= 20`): every 1 percent of battery
-  buys 20 m of descent.
-- While there is at least 1 whole percent of power left (`power >= 1`):
-  subtract `1` from power, add `METERS_PER_PERCENT` to the depth.
-- `return` the depth reached, as an `int`.
+A real launch sequence, not just a delay. From `seconds` down to `1`, once per
+number:
 
-| Call | Returns |
+| Step | What to do |
 |---|---|
-| `max_safe_depth(100)` | `2000` |
-| `max_safe_depth(50)` | `1000` |
-| `max_safe_depth(1)` | `20` |
-| `max_safe_depth(0)` | `0` |
+| 1 | `print(f"T-minus {seconds}...")` |
+| 2 | play a beep - normally `engine.play_tone(BEEP_FREQ, BEEP_MS)`, but once `seconds` is `URGENT_THRESHOLD` or less, the higher-pitched `engine.play_tone(URGENT_FREQ, BEEP_MS)` instead |
+| 3 | `engine.wait(1)` - pause one second |
+| 4 | subtract `1` from `seconds` |
+
+Once the count reaches `0`: `print("DIVE.")` and play the longer launch tone,
+`engine.play_tone(DIVE_FREQ, DIVE_MS)`.
+
+`BEEP_FREQ`, `BEEP_MS`, `URGENT_THRESHOLD`, `URGENT_FREQ`, `DIVE_FREQ`, and
+`DIVE_MS` are already defined at the top of the file.
+
+| Call | Prints | Beeps at |
+|---|---|---|
+| `countdown_to_dive(5)` | `T-minus 5...` ... `T-minus 1...` `DIVE.` | normal, normal, urgent, urgent, urgent, then the dive tone |
+| `countdown_to_dive(2)` | `T-minus 2...` `T-minus 1...` `DIVE.` | urgent, urgent, then the dive tone |
 
 ### 3. `draw_depth_ticks(screen, sub)` - a `for` loop, colored by a decision
 
@@ -74,58 +91,66 @@ the top of the file - same colors the `HULL:` readout uses.
 
 ### 4. `draw_sonar_rings(screen, sub)` - a `for` loop, animated over time
 
-Sonar reaches much farther than your light (`SONAR_RANGE_MAX = 400` pixels,
+Sonar reaches much farther than your light (`SONAR_RANGE_MAX = 480` pixels,
 versus the light's `155`), and instead of sitting still, a few pulses are
 always slowly traveling outward and looping back - a real sonar ping, not a
-static picture. Range still depends on battery, same idea as the light:
-`0` pixels at dead battery, `SONAR_RANGE_MAX` at a full one.
+static picture. Range still depends on battery, same idea as the light: `0`
+pixels at dead battery, `SONAR_RANGE_MAX` at a full one.
 
-Loop over `range(PULSE_COUNT)`. Every pulse travels at the same speed, but
-they don't all start at the same point in their trip - spread their starting
-points evenly across `0` to `1` using `i / PULSE_COUNT` (so with 4 pulses:
-`0, 0.25, 0.5, 0.75`).
+Think of `engine.now()` as a stopwatch that starts at `0` when the game opens
+and never stops climbing. Getting from that number to one pulse's radius
+takes four steps:
 
-A pulse's position is a fraction from `0` (just leaving the sub) to `1`
-(reached max range). `engine.now()` returns seconds since the game started
-and only ever counts up, so dividing it by `SWEEP_SECONDS` and adding a
-pulse's own starting point gives a number that climbs forever. Taking that
-value `% 1.0` (modulo) is what turns an endless climb into something that
-counts `0 -> 1 -> 0 -> 1 ...`, once every `SWEEP_SECONDS` - without the `%`,
-a pulse would just keep flying outward past the edge of the screen instead of
-looping back to the sub.
+1. **How far into one outward trip are we, ignoring any looping?**
+   `engine.now() / SWEEP_SECONDS` - this only ever grows: `0, 0.1, 0.5, 1.0,
+   1.5, 2.3`, and on forever. Each whole number is one full trip finished.
+2. **Turn that endless growth into a repeating `0`-to-`1` cycle.** Taking that
+   value modulo `1` (`% 1.0`) throws away the whole-number part and keeps
+   only what's left over - `2.3 % 1.0` is `0.3`. That's the trick that makes
+   a pulse restart at the sub every `SWEEP_SECONDS` instead of flying off
+   past the edge of the screen forever.
+3. **Give each pulse its own starting point in that cycle**, so all
+   `PULSE_COUNT` pulses end up spread out instead of stacked on each other.
+   Loop over `range(PULSE_COUNT)`; for pulse `i`, add `i / PULSE_COUNT` (`0,
+   0.25, 0.5, 0.75` for 4 pulses) before taking `% 1.0`.
+4. **Turn that `0`-to-`1` "how far along" number into an actual pixel
+   radius** by multiplying it by this frame's `sonar_range`.
 
-Once you have that `0`-`1` fraction for a pulse, its radius is that fraction
-of this frame's sonar range. Draw it centered on the sub with
+Draw each pulse centered on the sub with
 `engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)`.
 
-Worked example, full battery: at `t = 0` the four pulses sit at radius
-`0, 100, 200, 300` - by `t = 4.0` (half a sweep) they've moved to
-`200, 300, 0, 100` (the third one already wrapped back around to `0`).
+Worked example, full battery: at `t = 0` the four pulses sit at radius `0,
+120, 240, 360` - by `t = 8.0` (half a sweep) they've moved to `240, 360, 0,
+120` (the third one already wrapped back around to `0`).
 
 ---
 
 ## Try it
 
 Run `python main.py`. The pre-dive intake now rejects an out-of-range target
-depth (try `-5`, then `99999`, then `1200`) before the window opens. Once
-you're in: four sonar pulses should be slowly, smoothly expanding outward from
-the sub and looping back every few seconds, reaching much farther out than
-your light's cone. The depth scale on the right should show green ticks near the
-surface, turning yellow past 1000 m and red past 1500 m (assuming a 1000 m
-rated hull). Hold **DOWN** and watch `POWER RANGE` drop as the battery drains
-- and watch the sonar pulses reach less and less far as `PWR` drops toward 0.
-Confirm you can't descend once `PWR`, ballast, or `HULL` hits 0 - same gate as
-last week, now with hull added.
+depth (try `-5`, then `99999`, then `1200`). After you enter your dive plan,
+the terminal should count down out loud - `T-minus 5...` through `T-minus
+1...`, beeping each second (higher-pitched for the last 3), then `DIVE.` -
+before the window opens. Once you're in: four sonar pulses should be slowly,
+smoothly expanding outward from the sub and looping back every several
+seconds, reaching much farther out than your light's cone. The depth scale on
+the right should show green ticks near the surface, turning yellow past 1000
+m and red past 1500 m (assuming a 1000 m rated hull). Hold **DOWN** and watch
+`POWER RANGE` drop as the battery drains - and watch the sonar pulses reach
+less and less far as `PWR` drops toward 0. Confirm you can't descend once
+`PWR`, ballast, or `HULL` hits 0 - same gate as last week, now with hull
+added.
 
 ---
 
 ## Done when
 
-`python check.py` prints **19 / 19** (100 points). It checks:
+`python check.py` prints **20 / 20** (100 points). It checks:
 
 - `read_valid_depth()` rejects out-of-range numbers and returns the first
   valid one, as an `int` (boundaries `1` and `6000` included)
-- `max_safe_depth()` returns the values in the table above
+- `countdown_to_dive()` prints the right `T-minus` / `DIVE.` lines, beeps at
+  the right pitch at each step, and pauses once per second
 - `draw_depth_ticks()` calls `engine.draw_tick` once per marker (`0` to
   `2000`), with the correct on-screen position **and** the correct color for
   each depth
@@ -142,8 +167,9 @@ grader runs the same check on the file you turn in.)
 
 - Validation loop shape: set the value once before the loop, then
   `while value < 1 or value > 6000:` ... ask again inside.
-- In `max_safe_depth`, use two variables (`power`, `depth`) and `power -= 1`,
-  `depth += METERS_PER_PERCENT` each pass. Return `depth`.
+- `countdown_to_dive`: the `if`/`else` picking the beep goes *inside* the
+  `while`, checked fresh each pass - `seconds` is a different number every
+  time around.
 - `range(0, TICK_MAX + 1, TICK_STEP)` - the `+ 1` is what makes `2000` itself
   get drawn.
 - `draw_depth_ticks` needs an `if`/`elif`/`else` *inside* the `for` loop - one
@@ -154,7 +180,8 @@ grader runs the same check on the file you turn in.)
 - If your pulses never seem to reset, double check you're taking `% 1.0` of
   the whole `(engine.now() / SWEEP_SECONDS + offset)` expression, not just
   part of it.
-- Both drawing functions return nothing. They just loop and draw.
+- All three drawing/countdown functions return nothing. They just loop
+  (and print, or draw).
 
 ## If you're stuck / joining late
 

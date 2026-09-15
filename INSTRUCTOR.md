@@ -128,7 +128,7 @@ proctored module tests.
 |---|---|---|---|---|
 | **cp02_io** | Sep 1, 8 | 2 - Input/Processing/Output | Terminal pre-dive intake: `input()`, `int()`/`float()`, arithmetic, formatted `print()` | dive plan saved with correct types; briefing printed |
 | **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `clamp_battery()` (if), `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (3-arg `and` chain), `overall_alert()` (elif + `or`, order-sensitive) | 28 known input/output cases, boundary- and ordering-focused |
-| **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and accumulator (`max_safe_depth`) loops; `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop over `PULSE_COUNT` animating an outward-sweeping, battery-scaled sonar ping via `engine.now()` and `%` wraparound | boundary-focused value checks; tick position + color; sonar radius at controlled `(power, t)` combinations |
+| **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and a `while` launch countdown with an `if`/`else` inside it (`countdown_to_dive`, beeps via new `engine.play_tone`/`engine.wait`); `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop over `PULSE_COUNT` animating an outward-sweeping, battery-scaled sonar ping via `engine.now()` and `%` wraparound | boundary-focused value checks; countdown text/beep-order/wait-count checks; tick position + color; sonar radius at controlled `(power, t)` combinations |
 | **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | Refactor frame code into `draw_hud()`, `update_sub()`, `spawn_creature()`, `check_systems()` with params + returns | each function callable in isolation, correct returns; game still runs |
 | **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | `save_dive_log()`, `load_best_depth()` with `try/except FileNotFoundError`; append discoveries to CSV | file written/read; missing file handled; best depth persists |
 | **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | Single creature -> `creatures = []`; spawn/append; `for c in creatures` update+draw; cull; `(x, y)` tuples; max/min/len over depths | many independent creatures; list ops correct; stats correct |
@@ -197,7 +197,7 @@ two-tier detection model once creatures exist:
 
 - **Light** = short range (`155` px), full detail - if something's in it, you
   can see exactly what it is. Costs battery continuously while on.
-- **Sonar** = long range (`400` px, cp04's `SONAR_RANGE_MAX`), coarse
+- **Sonar** = long range (`480` px, cp04's `SONAR_RANGE_MAX`), coarse
   awareness only - tells you *something's* out there and roughly how far, not
   what it is. Also battery-scaled (`sonar_range = power * (SONAR_RANGE_MAX/100)`).
 
@@ -222,6 +222,37 @@ Net effect by midterm: sonar says something's near -> decide whether it's
 worth the battery to close in and light it up -> once lit, scan/catalog it
 (Module 9's dict + discovered-species set). Built entirely from concepts the
 syllabus already covers, in order.
+
+### cp04 revision: max_safe_depth cut, countdown_to_dive added, sonar slowed down
+
+Three review passes after the first cp04 draft, based on direct feedback:
+
+- **`max_safe_depth` is no longer a student function.** It was a `while`
+  loop spending battery down 1% at a time to compute
+  `start_power * METERS_PER_PERCENT` - a real value, but a fake loop (one
+  multiplication doesn't need repetition). It's now provided code, with a
+  docstring that says so directly - deliberately using the cut as a teaching
+  moment about recognizing when a loop is the wrong tool, not hiding it.
+- **`countdown_to_dive(seconds)` replaces it** as the fourth function: a
+  `while` loop with an `if`/`else` inside it (Module 3 review layered into
+  Module 4), printing a `T-minus ...` launch sequence and beeping through two
+  new `engine.py` helpers, `play_tone(freq_hz, ms)` and `wait(seconds)`.
+  `play_tone` synthesizes a square/sine buffer on the fly with the stdlib
+  `array` module (no sound asset files, no new dependency) and plays it via
+  `pygame.mixer`; both are no-ops under `LUMEN_HEADLESS=1` and get
+  lambda-mocked in `check.py` the same way `draw_ring`/`draw_tick` already
+  are, so grading never actually waits or makes noise.
+- **Sonar pacing**: `SWEEP_SECONDS` went 2.5 -> 8.0 -> 16.0 and
+  `SONAR_RANGE_MAX` 400 -> 480 across two rounds of "too fast/flashy, and it
+  should outrange the light more" feedback. At the current values a pulse
+  resets once every 4 seconds (`SWEEP_SECONDS / PULSE_COUNT`) instead of
+  every 0.625s originally.
+- **Hint style**: `draw_sonar_rings`'s docstring/briefing section is written
+  as an explicit 4-step "why" walkthrough (what dividing by `SWEEP_SECONDS`
+  means, why `% 1.0` is needed, why the per-pulse offset, why multiply by
+  range) rather than one dense paragraph - this was flagged as the most
+  likely function to genuinely confuse students, so it gets the most
+  scaffolding of the four despite the Tier 1 "prose, not literal code" rule.
 
 ### Ownership migration - the long-term goal
 
@@ -276,7 +307,7 @@ before.
 
 ## Status of this repo
 
-- [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD (pilot / target-depth line / ballast->dive-rate / power), dive-plan I/O, `draw_tick` (optional color arg from cp04 on), `draw_ring`, `draw_hud_text` (dashboard layer composited on top of the darkness so status readouts never get dimmed - see below)
+- [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD (pilot / target-depth line / ballast->dive-rate / power), dive-plan I/O, `draw_tick` (optional color arg from cp04 on), `draw_ring`, `draw_hud_text` (dashboard layer composited on top of the darkness so status readouts never get dimmed - see below), `play_tone`/`wait` (synthesized beeps + pause, from cp04 on - no-ops under `LUMEN_HEADLESS`)
 - [x] `cp02_io`, `cp03_decisions`, `cp04_loops` - complete (main + briefing + check + reference solution)
 - [ ] `cp05` - `cp12` - not built yet
 - [ ] `solution/lumen_full.py` - the finished game for playtesting - not built yet
