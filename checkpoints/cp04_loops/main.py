@@ -106,42 +106,39 @@ def draw_sonar_rings(screen, sub):
     """Sonar reaches much farther than your light, and it isn't a fixed
     picture - a handful of pulses are always slowly traveling outward, then
     resetting back to the sub and starting over, like a real active sonar
-    ping. (They don't shrink back inward - each one just restarts at 0 once
-    it's traveled far enough. More on that in step 2.) Range still depends
-    on battery, same idea as the light: 0 pixels at dead battery,
-    SONAR_RANGE_MAX pixels at a full one.
+    ping. Range still depends on battery, same idea as the light:
+    0 pixels at dead battery, SONAR_RANGE_MAX pixels at a full one.
 
     Think of engine.now() as a stopwatch that starts at 0 when the game
     opens and never stops climbing. Using that number to compute a pulse's current
-    radius takes five steps:
+    radius takes a few steps:
 
-    1. How far into ONE outward trip are we, ignoring any looping?
-       engine.now() / SWEEP_SECONDS - this only ever grows: 0, 0.1, 0.5,
-       1.0, 1.5, 2.3, and on forever. Each whole number is one full ping finished.
+    1. How far into the game we are divided by how long each ping takes.
+       engine.now() / SWEEP_SECONDS - this only ever grows, from 0 increasing forever.
+       Each whole number is one full ping finished.
 
-    2. Turn that endless growth into a repeating 0-to-1 cycle.
-       Taking that value modulo 1 (`% 1.0`) throws away the whole-number
-       part and keeps only what's left over - 2.3 % 1.0 is 0.3. That's the
-       trick that makes a pulse restart at the sub every SWEEP_SECONDS
+    2. Turn that endless growth into a repeating 0-to-1 cycle so it represents the fraction
+       of the current pulse. Taking the value (from step 1) modulo 1 (`% 1.0`) throws
+       away the whole-number part and keeps only what's left over - 2.3 % 1.0 is 0.3.
+       That's the trick that makes a pulse restart at the sub every SWEEP_SECONDS
        instead of flying off past the edge of the screen forever.
 
-    3. Give each pulse its own starting point in that cycle, so all
+    3. Stagger each pulse to give each its own starting point in that cycle, so all
        PULSE_COUNT pulses end up spread out instead of stacked on each
        other. Loop over range(PULSE_COUNT); for pulse i, add i / PULSE_COUNT
        (0, 0.25, 0.5, 0.75 for 4 pulses) before taking % 1.0.
+       Now each pulse will have its own number for what percent of the radius it should be at.
 
-    4. Turn that 0-to-1 "how far along" number into a pixel radius by
-       multiplying it by SONAR_RANGE_MAX - this is the pulse's true
-       position. It always travels at the same speed; battery doesn't slow
-       it down, only shortens how far you can still detect it (next step).
+    4. Turn that 0-to-1 "how far along" in this pulse percent number into an actual
+       pixel radius by multiplying it by SONAR_RANGE_MAX - this gives the pulse's true position.
 
-    5. Only draw the pulse if that radius is within THIS FRAME's
+    5. The pulse should only be active up to a certain range, as determined by our battery.
+       To show this, we will only draw the pulse if that radius is within THIS FRAME's
        battery-scaled sonar_range (sub.power * (SONAR_RANGE_MAX / 100)).
-       Past that point the ping is still out there, traveling at the same
-       speed as always - your equipment just can't pick it up yet, so skip
-       drawing it rather than showing it at some shrunken radius.
+       Past that point the ping is technically still out there, we're just saying that
+       our equipment can't pick it up.
 
-    Draw each visible pulse centered on the sub with:
+    6. Once you have the radius, to actually draw the visible pulses centered on the sub use this:
         engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)
     """
     pass

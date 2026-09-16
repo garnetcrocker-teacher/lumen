@@ -10,7 +10,7 @@
 Checkpoints 2 and 3 are carried into this week's `main.py` - the pre-dive
 intake at the very bottom, and your five Checkpoint 3 functions just above it.
 This week adds a launch countdown before the dive begins, plus two new cockpit
-instruments once you're in the water, and none of it is just decoration: a
+instruments once you're in the water: a
 **countdown** that counts down out loud and beeps before the window even
 opens, a **depth gauge** running down the right edge of the screen,
 color-coded by how dangerous each depth is (reusing last week's
@@ -18,15 +18,6 @@ color-coded by how dangerous each depth is (reusing last week's
 and continuously travel outward from the sub, much farther than your light
 reaches, so you get some awareness of what's out there before you're close
 enough to actually see it. All three are built with a loop.
-
-(An earlier version of this checkpoint had a fourth function,
-`max_safe_depth`, and a `POWER RANGE` readout built from it - "how many
-meters you can dive before the battery dies." It's gone now: it turned out
-to be pure fiction. Battery in this game only drains while the light is on
-(check `engine.py`'s `_update_systems` if you want proof); it never drains
-from depth. So the stat wasn't describing a made-up conversion rate, it was
-describing a mechanic that doesn't exist. Better to cut it than keep a
-number that lies to the pilot.)
 
 ---
 
@@ -50,7 +41,7 @@ Open `main.py`. Fill in the four functions between `BEGIN YOUR CODE
 - If it's `< 1` or `> 6000`, print `Out of range - enter 1 to 6000.` and ask
   again.
 - Loop until the number is in range, then `return` it as an `int`.
-- Assume the pilot types digits. (Bad text like `"abc"` is a Module 6 problem.)
+- Assume the pilot types digits. (Bad text like `"abc"` we'll deal with later.)
 
 ### 2. `countdown_to_dive(seconds)` - a `while` loop with a decision inside it
 
@@ -96,45 +87,45 @@ the top of the file - same colors the `HULL:` readout uses.
 Sonar reaches much farther than your light (`SONAR_RANGE_MAX = 480` pixels,
 versus the light's `155`), and instead of sitting still, a few pulses are
 always slowly traveling outward, then resetting back to the sub and starting
-over - a real sonar ping, not a static picture. (They don't shrink back
-inward - each one just snaps back to radius `0` once it's traveled far
-enough, and grows out again from there.) Range still depends on battery,
+over - a real sonar ping, not a static picture. Range still depends on battery,
 same idea as the light: `0` pixels at dead battery, `SONAR_RANGE_MAX` at a
 full one.
 
 Think of `engine.now()` as a stopwatch that starts at `0` when the game opens
-and never stops climbing. Getting from that number to one pulse's radius
-takes five steps:
+and never stops climbing. Using that number to compute a pulse's current
+radius takes a few steps:
 
-1. **How far into one outward trip are we, ignoring any looping?**
-   `engine.now() / SWEEP_SECONDS` - this only ever grows: `0, 0.1, 0.5, 1.0,
-   1.5, 2.3`, and on forever. Each whole number is one full trip finished.
-2. **Turn that endless growth into a repeating `0`-to-`1` cycle.** Taking that
-   value modulo `1` (`% 1.0`) throws away the whole-number part and keeps
-   only what's left over - `2.3 % 1.0` is `0.3`. That's the trick that makes
-   a pulse restart at the sub every `SWEEP_SECONDS` instead of flying off
-   past the edge of the screen forever.
-3. **Give each pulse its own starting point in that cycle**, so all
-   `PULSE_COUNT` pulses end up spread out instead of stacked on each other.
-   Loop over `range(PULSE_COUNT)`; for pulse `i`, add `i / PULSE_COUNT` (`0,
-   0.25, 0.5, 0.75` for 4 pulses) before taking `% 1.0`.
-4. **Turn that `0`-to-`1` "how far along" number into a pixel radius** by
-   multiplying it by `SONAR_RANGE_MAX` - this is the pulse's *true*
-   position. It always travels at the same speed; battery doesn't slow it
-   down, only shortens how far you can still detect it (next step).
-5. **Only draw the pulse if that radius is within this frame's
-   battery-scaled `sonar_range`** (`sub.power * (SONAR_RANGE_MAX / 100)`).
-   Past that point the ping is still out there, traveling at the same speed
-   as always - your equipment just can't pick it up yet, so skip drawing it
-   rather than showing it at some shrunken radius.
-
-Draw each visible pulse centered on the sub with
-`engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)`.
+1. **How far into the game we are, divided by how long each ping takes.**
+   `engine.now() / SWEEP_SECONDS` - this only ever grows, from `0` increasing
+   forever. Each whole number is one full ping finished.
+2. **Turn that endless growth into a repeating `0`-to-`1` cycle** so it
+   represents the fraction of the current pulse. Taking the value from step
+   1 modulo `1` (`% 1.0`) throws away the whole-number part and keeps only
+   what's left over - `2.3 % 1.0` is `0.3`. That's the trick that makes a
+   pulse restart at the sub every `SWEEP_SECONDS` instead of flying off past
+   the edge of the screen forever.
+3. **Stagger each pulse** to give each its own starting point in that cycle,
+   so all `PULSE_COUNT` pulses end up spread out instead of stacked on each
+   other. Loop over `range(PULSE_COUNT)`; for pulse `i`, add `i / PULSE_COUNT`
+   (`0, 0.25, 0.5, 0.75` for 4 pulses) before taking `% 1.0`. Now each pulse
+   will have its own number for what percent of the radius it should be at.
+4. **Turn that `0`-to-`1` "how far along" in this pulse percent number into
+   an actual pixel radius** by multiplying it by `SONAR_RANGE_MAX` - this
+   gives the pulse's *true* position.
+5. **The pulse should only be active up to a certain range, as determined by
+   our battery.** To show this, we will only draw the pulse if that radius is
+   within THIS FRAME's battery-scaled `sonar_range`
+   (`sub.power * (SONAR_RANGE_MAX / 100)`). Past that point the ping is
+   technically still out there, we're just saying that our equipment can't
+   pick it up.
+6. **Once you have the radius**, to actually draw the visible pulses
+   centered on the sub use this:
+   `engine.draw_ring(screen, (engine.WIDTH // 2, engine.SUB_SCREEN_Y), radius)`.
 
 Worked example, full battery (`sonar_range` equals `SONAR_RANGE_MAX`, so
 every pulse is always visible): at `t = 0` the four pulses sit at radius `0,
 120, 240, 360` - by `t = 8.0` (half a sweep) they've moved to `240, 360, 0,
-120` (the third one already wrapped back around to `0`).
+120` (the third and fourth already wrapped back around).
 
 At lower battery, `sonar_range` shrinks below `SONAR_RANGE_MAX`, so some
 pulses will be traveling *past* what you can currently detect at any given
@@ -153,7 +144,7 @@ the terminal should count down out loud - `T-minus 5...` through `T-minus
 1...`, beeping each second (higher-pitched for the last 3), then `DIVE.` -
 before the window opens. Once you're in: four sonar pulses should be slowly,
 smoothly expanding outward from the sub, each one resetting back to the
-center every several seconds (a snap back to radius 0, not a shrink), reaching
+center every several seconds, reaching
 much farther out than your light's cone. The depth scale on the right should
 show green ticks near the surface, turning yellow past 1000
 m and red past 1500 m (assuming a 1000 m rated hull). Leave the light on for
