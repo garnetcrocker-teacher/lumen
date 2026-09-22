@@ -18,8 +18,10 @@ _smoke*.json
 # so they never need a copy here - block a stray one from being committed
 solution/engine.py
 
-# actual student submissions - never belongs in a shared repo
+# actual student submissions/grading data - never belongs in a shared repo
 Student_Submissions/
+Student_Draft_Submissions/
+Student_Grading/
 
 # editor / OS junk
 .vscode/

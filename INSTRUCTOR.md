@@ -103,9 +103,19 @@ assignment. Not the check.py output (trivially forgeable) and not check.py itsel
 (identical for everyone). `check.py` is the student's own pre-flight check; you
 run the same `check.py` on the `main.py` they turned in to produce the grade.
 
-To grade: drop each submitted `main.py` into a clean copy of the checkpoint
-folder and run `python check.py`. A `tools/grade.py` that does this over a folder
-of submissions is on the to-do list.
+To grade one submission by hand: drop it into a clean copy of the checkpoint
+folder as `main.py` and run `python check.py`.
+
+To grade a whole folder at once: `python tools/grade.py <checkpoint_folder_name>
+<submissions_folder>` (e.g. `python tools/grade.py cp02_io Student_Grading/cp02_io`).
+It runs every `.py` file in that folder (any name except `main.py`/`check.py`/
+`engine.py`) through a fresh copy of that checkpoint's canonical `check.py` +
+`engine.py` in an isolated temp dir - never the possibly-stale copies sitting in
+the submissions folder itself, and never touching one student's file while
+grading another's. A 15-second timeout guards against a hung/looping submission
+blocking the batch. Writes `grades.csv` (student, file, status, score, points) and
+`logs/<name>.txt` (that student's full `[PASS]`/`[FAIL]` output) into the
+submissions folder - both already covered by the `Student_*` `.gitignore` entries.
 
 Canvas assignment is 100 points; `check.py` already normalizes to 100. Suggested
 weight: each checkpoint small; the payoff is the finished game and the Module 12
