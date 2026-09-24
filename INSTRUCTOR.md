@@ -139,7 +139,7 @@ proctored module tests.
 | **cp02_io** | Sep 1, 8 | 2 - Input/Processing/Output | Terminal pre-dive intake: `input()`, `int()`/`float()`, arithmetic, formatted `print()` | dive plan saved with correct types; briefing printed |
 | **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `clamp_battery()` (if), `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (3-arg `and` chain), `overall_alert()` (elif + `or`, order-sensitive) | 28 known input/output cases, boundary- and ordering-focused |
 | **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and a `while` launch countdown with an `if`/`else` inside it (`countdown_to_dive`, beeps via new `engine.play_tone`/`engine.wait`); `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop over `PULSE_COUNT` animating an outward-sweeping, battery-scaled sonar ping via `engine.now()` and `%` wraparound | boundary-focused value checks; countdown text/beep-order/wait-count checks; tick position + color; sonar radius at controlled `(power, t)` combinations |
-| **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | Refactor frame code into `draw_hud()`, `update_sub()`, `spawn_creature()`, `check_systems()` with params + returns | each function callable in isolation, correct returns; game still runs |
+| **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s tangled logic split into four named functions students design themselves: `current_alert()` and `alert_color()` (value-returning, call cp03's functions internally), `handle_controls()` and `draw_dashboard()` (void, side-effects only) - first time calling their own functions from within a function, not just leaf calculations | value-returning outputs across hull/oxygen combinations incl. DANGER-priority; color lookup; key-handling side effects incl. the can_descend gate; exact draw calls (text/position/size/color) with no extras or omissions |
 | **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | `save_dive_log()`, `load_best_depth()` with `try/except FileNotFoundError`; append discoveries to CSV | file written/read; missing file handled; best depth persists |
 | **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | Single creature -> `creatures = []`; spawn/append; `for c in creatures` update+draw; cull; `(x, y)` tuples; max/min/len over depths | many independent creatures; list ops correct; stats correct |
 | **cp08_strings** | Oct 27 | 8 - More About Strings | Species-code builder `f"{p}-{n:04d}"`; parse a scanned code back with slicing/`split`; normalize names; reverse/shift decode puzzle | code format; round-trip parse; decode returns expected string |
@@ -302,8 +302,14 @@ lines around them become the student's to write.
 
 Rough roadmap, revisit as each module actually gets built:
 
-- **Module 5 (Functions):** still `main.py` - refactor `frame()`'s contents
-  into named functions, as planned. Doesn't yet touch `engine.py`.
+- **Module 5 (Functions):** done as planned - `frame()`'s contents split into
+  four named functions in `main.py` (`current_alert`, `alert_color`,
+  `handle_controls`, `draw_dashboard`). Didn't touch `engine.py`; the actual
+  instructor prompted directly for that at the time and it was talked back
+  down to this for two reasons - `frame()`'s decomposition is a purer Module 5
+  lesson on its own, and `tools/sync_engine.py`'s one-canonical-file model
+  still isn't carry-forward-aware, so Module 10 remains the right place to
+  pay that cost.
 - **Module 7 (Lists) / Module 9 (Dicts):** build the creature list and the
   catalog dict as student-owned from the start (in `main.py`, since that's new
   content, not a migration) rather than engine-managed state a checkpoint
@@ -333,7 +339,7 @@ before.
 ## Status of this repo
 
 - [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD (pilot / target-depth line / ballast->dive-rate / power), dive-plan I/O, `draw_tick` (optional color arg from cp04 on), `draw_ring`, `draw_hud_text` (dashboard layer composited on top of the darkness so status readouts never get dimmed - see below), `play_tone`/`wait` (synthesized beeps + pause, from cp04 on - no-ops under `LUMEN_HEADLESS`)
-- [x] `cp02_io`, `cp03_decisions`, `cp04_loops` - complete (main + briefing + check + reference solution)
-- [ ] `cp05` - `cp12` - not built yet
+- [x] `cp02_io`, `cp03_decisions`, `cp04_loops`, `cp05_functions` - complete (main + briefing + check + reference solution)
+- [ ] `cp06` - `cp12` - not built yet
 - [ ] `solution/lumen_full.py` - the finished game for playtesting - not built yet
 - [ ] `tools/build_zips.py` - one-command per-checkpoint zip builder - not built yet
