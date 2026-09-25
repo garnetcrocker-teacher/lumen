@@ -21,21 +21,23 @@ There's no limit to how far you can go in either direction, and the game
 now keeps an odometer of how far you've drifted in total, in either
 direction - it's on the dashboard, bottom right.
 
-There's also an actual destination now: the dive site you're descending
-toward isn't directly below where you started (`sub.target_x` holds its
-horizontal position - real launch points rarely land you exactly on top of
-the thing you're diving to find). Your own `POSITION` reading (in the
-top-left corner, under `DEPTH`) tells you where you are; this week you
-build the piece that tells you which way the site is and how far, so you
-can actually steer toward it.
+There's also a reason to drift now, not just the ability to: a circular
+recharge base sits somewhere out there (`sub.base_x`/`sub.base_depth`
+mark its center, `sub.base_radius` its size). Get within the circle -
+depth counts too, not just sideways position, and you don't need to land
+on an exact point, just get inside it - and your oxygen and power refill
+instead of draining. Your own `POSITION` reading (top-left, under
+`DEPTH`) tells you where you are; this week you build the piece that
+tells you how far the base's edge still is, so you know when you've
+actually made it.
 
 Most of `draw_dashboard` and `handle_controls` should be quick - you're not
 writing new logic for them, nearly every line you need is already sitting
 almost word-for-word inside your own Checkpoint 4 `main.py`'s `frame()`.
 Open it side by side with this one. The sideways movement flags, the
-odometer readout, and the heading-to-site readout are the pieces that are
+odometer readout, and the base-distance readout are the pieces that are
 genuinely new - and the two new readouts need two new functions,
-`format_distance` and `heading_to_target`, to decide how to show them.
+`format_distance` and `distance_to_base`, to decide how to show them.
 
 ---
 
@@ -70,17 +72,18 @@ values) is the same idea as `hull_status` or `oxygen_state` from
 Checkpoint 3. Unlike those two functions, though, this one hands back a
 string, not a status word.
 
-### 2. `heading_to_target(offset_m)` - returns a string
+### 2. `distance_to_base(edge_m)` - returns a string
 
-`sub.target_x` is the dive site's horizontal position; `sub.x` is yours.
-Whoever calls this works out `offset_m` as `sub.target_x - sub.x` and
-hands it to you - positive means the site is to your RIGHT, negative means
-LEFT. Turn that into a string like `"340 m RIGHT"` or `"1.2 km LEFT"`:
+The recharge base is a circle, not a single point, so "distance to it"
+really means "distance to its edge" - once you're inside, that's 0.
+`engine.distance_to_base_edge(sub)` (already written for you, in
+`engine.py`) works out that number: straight-line distance from the sub
+to the base's center, minus the radius. It comes out 0 or negative once
+you're inside. Whoever calls this function hands you that number as
+`edge_m`:
 
-- work out the direction from the sign of `offset_m`
-- call your own `format_distance()` on the *size* of the offset (its
-  absolute value, not the sign) to get the `"340 m"` / `"1.2 km"` part
-- put the direction word after it
+- `edge_m <= 0` (inside) -> return `"IN RANGE"`
+- otherwise -> return `format_distance(edge_m)`
 
 Nothing to copy here either - it's new, same as `format_distance`. Notice
 this one calls that one: a function you wrote calling another function you
@@ -108,10 +111,10 @@ corner - mirroring the hint line's spot in the bottom-left. Same size (13)
 and color (`(120, 140, 155)`) as the hint line, position
 `(engine.WIDTH - 16, engine.HEIGHT - 26)`, anchor `"topright"`.
 
-Call `heading_to_target(sub.target_x - sub.x)` and draw the result as
-`"SITE: " + heading_to_target(sub.target_x - sub.x)`, at
-`(engine.WIDTH // 2, 86)`, anchor `"midtop"`, same size and color as the
-other two.
+Call `distance_to_base(engine.distance_to_base_edge(sub))` and draw the
+result as `"BASE: " + distance_to_base(engine.distance_to_base_edge(sub))`,
+at `(engine.WIDTH // 2, 86)`, anchor `"midtop"`, same size and color as
+the other two.
 
 ### 4. `handle_controls(sub)` - void
 
@@ -135,12 +138,12 @@ diving and rising.
 
 `draw_dashboard` and `handle_controls` change things (drawing to the
 screen, or changing `sub`) and hand nothing back - that's what makes them
-void instead of value-returning. `format_distance` and `heading_to_target`
+void instead of value-returning. `format_distance` and `distance_to_base`
 are the opposite: neither draws or changes anything, they just hand a
 string back to whoever called them. Inside `draw_dashboard`, you're
 calling both of them - one of your own functions calling another - plus
 `hull_status`, `oxygen_state`, and `can_descend`, all from Checkpoint 3,
-and `heading_to_target` itself calls `format_distance`. A void function
+and `distance_to_base` itself calls `format_distance`. A void function
 can absolutely use another function's return value; it just doesn't pass
 anything back to *its own* caller.
 
@@ -161,9 +164,11 @@ the drifting specks in the water should visibly slide the other way, same
 idea as watching the water shift as you dive, just sideways. There's no
 wall - hold one direction long enough and you'll just keep going. Watch the
 bottom-right corner: the DRIFTED readout should climb the whole time, and
-flip from meters to kilometers once it passes 1000. Watch the SITE readout
-too - drift the direction it names and the distance should shrink; keep
-going past the site and it should flip to the other direction.
+flip from meters to kilometers once it passes 1000. Watch the BASE readout
+too - it should shrink as you approach (diving/rising counts as well as
+drifting, since the base has a depth too), then flip to `IN RANGE` once
+you're inside. Once it does, watch O2 and PWR (top-left) climb instead of
+drain for as long as you sit there.
 
 ---
 
@@ -173,8 +178,8 @@ going past the site and it should flip to the other direction.
 
 - `format_distance()` formats both a sub-1000 and an over-1000 value
   correctly
-- `heading_to_target()` picks the right direction word for a positive and
-  a negative offset, using `format_distance()` correctly for the size
+- `distance_to_base()` returns `"IN RANGE"` for a value at or below 0, and
+  uses `format_distance()` correctly for the size otherwise
 - `handle_controls()` sets `sub.descending` / `sub.ascending` /
   `sub.moving_left` / `sub.moving_right` / `sub.light_on` correctly for
   different key combinations, including that `DOWN` is correctly blocked
@@ -192,19 +197,20 @@ the grader runs the same check on the file you turn in.)
 
 - Go copy the lines from your own Checkpoint 4 `frame()` first, then figure
   out the `def` line. Don't try to write `draw_dashboard` or
-  `handle_controls` from memory - `format_distance` and `heading_to_target`
+  `handle_controls` from memory - `format_distance` and `distance_to_base`
   are the two functions here with no source to copy from.
 - A function's parameters are just "whatever the lines inside it need from
   outside." If a line uses `screen`, `sub`, or `alert`, that's a parameter.
-- `heading_to_target` doesn't need `sub` as a parameter at all - it only
-  needs the one number (`offset_m`) that whoever calls it already worked
-  out. Compare that to `draw_dashboard`, which does need `sub`.
+- `distance_to_base` doesn't need `sub` as a parameter at all - it only
+  needs the one number (`edge_m`) that whoever calls it already worked
+  out (using `engine.distance_to_base_edge(sub)`). Compare that to
+  `draw_dashboard`, which does need `sub`.
 - `handle_controls` doesn't need `elif` - each key is its own independent
   `if`, exactly like before. `LEFT`/`RIGHT` are two more independent `if`s
   in the exact same style, not a special case.
 - If `check.py` says `draw_dashboard` drew the wrong number of lines, count
   your `draw_hud_text` calls against the six things it's supposed to draw
-  (hull status, O2, STATUS, the hint line, DRIFTED, and SITE).
+  (hull status, O2, STATUS, the hint line, DRIFTED, and BASE).
 
 ## If you're stuck / joining late
 

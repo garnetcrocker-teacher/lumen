@@ -2,7 +2,7 @@
 Checkpoint 5 auto-check.   Run:  python check.py
 
 Imports the four functions from main.py (draw_dashboard, format_distance,
-heading_to_target, handle_controls) and exercises them directly.
+distance_to_base, handle_controls) and exercises them directly.
 No window opens. Paste the final score into Canvas.
 """
 
@@ -49,7 +49,7 @@ def main():
         print(f"  [FAIL] could not import main.py: {exc!r}")
         return _report(0, TOTAL_CHECKS)
 
-    needed = ("draw_dashboard", "format_distance", "heading_to_target", "handle_controls")
+    needed = ("draw_dashboard", "format_distance", "distance_to_base", "handle_controls")
     for fn in needed:
         if not hasattr(student, fn):
             print(f"  [FAIL] main.py has no function called {fn}()")
@@ -58,7 +58,7 @@ def main():
     import engine
 
     def make_sub(depth=0.0, oxygen=100.0, rated=1000.0, ballast=40.0, power=100.0,
-                 hull=100.0, total_drift=340.0, target_x=340.0):
+                 hull=100.0, total_drift=340.0, base_x=460.0, base_radius=120.0):
         sub = engine.Submarine(engine.DEFAULT_DIVEPLAN)
         sub.depth = depth
         sub.oxygen = oxygen
@@ -67,7 +67,9 @@ def main():
         sub.power = power
         sub.hull = hull
         sub.total_drift = total_drift
-        sub.target_x = target_x
+        sub.base_x = base_x
+        sub.base_depth = depth        # keep the depth axis out of it - tests reason in x only
+        sub.base_radius = base_radius
         return sub
 
     # --- format_distance -------------------------------------------------------
@@ -85,20 +87,20 @@ def main():
     except Exception as exc:
         check("format_distance(1500) returns \"1.5 km\"", False, repr(exc))
 
-    # --- heading_to_target -----------------------------------------------------
+    # --- distance_to_base --------------------------------------------------------
     try:
-        result = student.heading_to_target(340)
-        check("heading_to_target(340) returns \"340 m RIGHT\"", result == "340 m RIGHT",
+        result = student.distance_to_base(340)
+        check("distance_to_base(340) returns \"340 m\"", result == "340 m",
               f"got {result!r}")
     except Exception as exc:
-        check("heading_to_target(340) returns \"340 m RIGHT\"", False, repr(exc))
+        check("distance_to_base(340) returns \"340 m\"", False, repr(exc))
 
     try:
-        result = student.heading_to_target(-1500)
-        check("heading_to_target(-1500) returns \"1.5 km LEFT\"", result == "1.5 km LEFT",
+        result = student.distance_to_base(-75)
+        check("distance_to_base(-75) returns \"IN RANGE\"", result == "IN RANGE",
               f"got {result!r}")
     except Exception as exc:
-        check("heading_to_target(-1500) returns \"1.5 km LEFT\"", False, repr(exc))
+        check("distance_to_base(-75) returns \"IN RANGE\"", False, repr(exc))
 
     # --- handle_controls -------------------------------------------------------
     real_down, real_pressed = engine.key_down, engine.key_pressed
@@ -236,11 +238,11 @@ def main():
                             "size": 13, "color": (120, 140, 155), "anchor": "topright"},
           f"got {drifted_line}")
 
-    site_line = next((c for c in text_calls if c["text"].startswith("SITE")), None)
-    check("draw_dashboard draws the SITE heading line correctly (text, position, size, color)",
-          site_line == {"text": "SITE: 340 m RIGHT", "pos": (engine.WIDTH // 2, 86),
+    base_line = next((c for c in text_calls if c["text"].startswith("BASE")), None)
+    check("draw_dashboard draws the BASE line correctly (text, position, size, color)",
+          base_line == {"text": "BASE: 340 m", "pos": (engine.WIDTH // 2, 86),
                          "size": 13, "color": (120, 140, 155), "anchor": "midtop"},
-          f"got {site_line}")
+          f"got {base_line}")
 
     check("draw_dashboard draws exactly 5 lines of HUD text (no extras, none missing)",
           len(text_calls) == 5, f"got {len(text_calls)}: {[c['text'] for c in text_calls]}")

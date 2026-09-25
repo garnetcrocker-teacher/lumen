@@ -6,7 +6,7 @@ Module 5: Functions
     Check your work:    python check.py
 
 Your job this week is the FOUR functions in the YOUR CODE section below:
-draw_dashboard, format_distance, heading_to_target, handle_controls.
+draw_dashboard, format_distance, distance_to_base, handle_controls.
 Unlike every checkpoint so far, the def lines aren't already written for
 you - see the YOUR CODE section for exactly what to write.
 
@@ -22,10 +22,10 @@ with this file. For that part you're not writing new logic, you're deciding
 which existing lines belong together, giving that group a name and a
 parameter list, and writing the def line yourself.
 
-format_distance and heading_to_target are different: they're genuinely
+format_distance and distance_to_base are different: they're genuinely
 new, there's nothing to copy for either one anywhere. Both are
 value-returning - each hands something back to whatever calls it, instead
-of drawing or changing anything itself. heading_to_target even calls
+of drawing or changing anything itself. distance_to_base even calls
 format_distance from inside itself, and draw_dashboard calls both.
 
 Because nothing is pre-written this week, `python main.py` will crash with
@@ -88,16 +88,16 @@ DIVE_MS = 400
 #     This is a value-returning function - it hands the string back to
 #     whatever calls it, instead of drawing or changing anything itself.
 #
-# heading_to_target(offset_m) - returns a string, e.g. "340 m RIGHT" or
-#                                "1.2 km LEFT"
-#     The dive site isn't directly below where you started - sub.target_x
-#     holds its horizontal position, sub.x holds yours. Whatever calls this
-#     works out offset_m as (sub.target_x - sub.x) and hands it to you:
-#     positive means the site is to your RIGHT, negative means LEFT.
-#     Call your own format_distance() on the size of the offset (not the
-#     sign) to get the "340 m" / "1.2 km" part, then stick "RIGHT" or
-#     "LEFT" on the end depending on the sign of offset_m. Also
-#     value-returning, and also nothing to copy - this is new too.
+# distance_to_base(edge_m) - returns a string, e.g. "340 m" or "IN RANGE"
+#     There's a recharge base somewhere in the world - a circular area,
+#     not a single exact point. engine.distance_to_base_edge(sub) works
+#     out how far outside that circle's edge you currently are, in meters
+#     (0 or negative once you're inside it - you don't have to land on an
+#     exact pixel, just get within the circle). Whoever calls this hands
+#     you that number as edge_m:
+#         - edge_m <= 0 (you're inside) -> return "IN RANGE"
+#         - otherwise -> return format_distance(edge_m)
+#     Also value-returning, and also nothing to copy - this is new too.
 #
 # draw_dashboard(screen, sub, alert)
 #     Everything frame() used to do with draw_hull_status/draw_hud_text:
@@ -116,10 +116,10 @@ DIVE_MS = 400
 #     position (engine.WIDTH - 16, engine.HEIGHT - 26), anchor "topright",
 #     same size (13) and color (120, 140, 155) as the hint line.
 #
-#     Add another reading exactly "SITE: " followed by whatever
-#     heading_to_target(sub.target_x - sub.x) returns. Position
-#     (engine.WIDTH // 2, 86), anchor "midtop", same size (13) and color
-#     (120, 140, 155) as the other two.
+#     Add another reading exactly "BASE: " followed by whatever
+#     distance_to_base(engine.distance_to_base_edge(sub)) returns.
+#     Position (engine.WIDTH // 2, 86), anchor "midtop", same size (13)
+#     and color (120, 140, 155) as the other two.
 #
 # handle_controls(sub)
 #     Everything frame() used to do with handling DOWN / UP / L.
@@ -134,7 +134,7 @@ DIVE_MS = 400
 #     sub.ascending.
 #
 # draw_dashboard and handle_controls are void; format_distance and
-# heading_to_target return a string. No def line is written for you on any
+# distance_to_base return a string. No def line is written for you on any
 # of them; name and parameters are your call.
 # --- END YOUR CODE -----------------------------------------------------------
 

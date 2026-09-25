@@ -41,9 +41,10 @@ def format_distance(meters):
         return f"{meters / 1000:.1f} km"
 
 
-def heading_to_target(offset_m):
-    direction = "RIGHT" if offset_m >= 0 else "LEFT"
-    return format_distance(abs(offset_m)) + " " + direction
+def distance_to_base(edge_m):
+    if edge_m <= 0:
+        return "IN RANGE"
+    return format_distance(edge_m)
 
 
 def draw_dashboard(screen, sub, alert):
@@ -63,7 +64,7 @@ def draw_dashboard(screen, sub, alert):
     engine.draw_hud_text("DRIFTED: " + format_distance(sub.total_drift),
                          (engine.WIDTH - 16, engine.HEIGHT - 26), size=13,
                          anchor="topright", color=(120, 140, 155))
-    engine.draw_hud_text("SITE: " + heading_to_target(sub.target_x - sub.x),
+    engine.draw_hud_text("BASE: " + distance_to_base(engine.distance_to_base_edge(sub)),
                          (engine.WIDTH // 2, 86), size=13,
                          anchor="midtop", color=(120, 140, 155))
 

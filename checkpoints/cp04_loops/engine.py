@@ -165,10 +165,14 @@ class Submarine:
         self.depth = 0.0                                    # meters below surface
         self.x = 0.0                                        # horizontal drift
         self.target_depth = _as_float(plan.get("target_depth"), 300)
-        # the dive site isn't directly below where you entered the water -
-        # real launch points rarely are. Module 5 gives you a way to read
-        # this and steer toward it.
-        self.target_x = random.choice((-1, 1)) * random.uniform(250.0, 900.0)
+        # a circular recharge base somewhere in the world (not a single
+        # exact point) - step within base_radius meters of (base_x,
+        # base_depth), measuring straight-line distance so depth counts
+        # too, and oxygen/power refill instead of draining. Module 5 gives
+        # you a way to read how far the edge still is.
+        self.base_x = random.choice((-1, 1)) * random.uniform(250.0, 900.0)
+        self.base_depth = random.uniform(150.0, 700.0)
+        self.base_radius = 120.0
         self.oxygen = 100.0                                 # percent
         self.power = _as_float(plan.get("battery_pct"), 100.0)   # percent
         self.ballast = _as_float(plan.get("ballast_kg"), 40.0)   # kg
@@ -278,6 +282,16 @@ def world_x_to_screen(sub, world_x):
     a fixed (x, y) position in the world and need to scroll past like
     everything else does as the sub moves."""
     return int(WIDTH // 2 + (world_x - sub.x))
+
+
+def distance_to_base_edge(sub):
+    """How far outside the recharge base's edge the sub currently is, in
+    meters - straight-line distance to (base_x, base_depth), minus
+    base_radius. 0 or negative once inside; you don't need to land on an
+    exact point, just get within the circle."""
+    dx = sub.x - sub.base_x
+    dy = sub.depth - sub.base_depth
+    return (dx * dx + dy * dy) ** 0.5 - sub.base_radius
 
 
 def depth_zone_name(depth):
@@ -467,9 +481,13 @@ def _update_systems(sub):
     sub.moving_left = False
     sub.moving_right = False
 
-    sub.oxygen = max(0.0, sub.oxygen - (0.55 + sub.depth / 5000.0) * d)
-    if sub.light_on and sub.power > 0:
-        sub.power = max(0.0, sub.power - 0.45 * d)
+    if distance_to_base_edge(sub) <= 0:
+        sub.oxygen = min(100.0, sub.oxygen + 8.0 * d)      # inside the recharge base - refill
+        sub.power = min(100.0, sub.power + 6.0 * d)
+    else:
+        sub.oxygen = max(0.0, sub.oxygen - (0.55 + sub.depth / 5000.0) * d)
+        if sub.light_on and sub.power > 0:
+            sub.power = max(0.0, sub.power - 0.45 * d)
     if sub.power <= 0:
         sub.light_on = False
     if sub.depth > sub.rated_depth:
