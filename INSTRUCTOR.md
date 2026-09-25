@@ -236,6 +236,25 @@ above. `handle_controls()` only sets the two flags, mirroring the existing
 `DOWN`/`UP` lines exactly; all the rendering and physics-application
 complexity stays engine-side, same as `draw_ring`/`play_tone` before it.
 
+`_draw_base_hud` now also shows a `POSITION` line right under `DEPTH`
+(`f"POSITION {sub.x:+7.1f} m"`, signed so students can tell left from
+right at a glance), pushing `depth_zone_name`/`TARGET`/`BALLAST` down one
+row each (94/112/130/148). This is passive display, not student-written -
+no checkpoint's `check.py` covers it, since `_draw_base_hud` only ever
+runs inside `engine.run()`'s real game loop, which is skipped entirely in
+headless/check.py mode. Verified instead by calling `_draw_base_hud`
+directly against a real (non-None) headless `pygame.Surface` with
+`draw_text` mocked, for both a positive and a negative `sub.x`.
+
+The point of exposing this now: it sets up a planned future mechanic
+where a sonar/creature alert names a world x (e.g. "Large Creature at
+x 500") and the player has to read their own `POSITION` line and decide
+which way to drift to close the gap - the same "build the instrument
+now, cash it in later" move as `world_x_to_screen`. Nothing consumes it
+yet; it's live starting now (`sub.x` exists in every checkpoint via the
+shared `Submarine.__init__`), but only reads as "0.0" until cp05's
+sideways movement gives it something to show.
+
 ### The odometer (`format_distance`) - why cp05 got a third function
 
 Even with sideways movement added, cp05's two functions were still mostly

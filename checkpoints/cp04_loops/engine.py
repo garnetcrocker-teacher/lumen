@@ -386,17 +386,18 @@ def _draw_base_hud(screen, sub):
     _bar(screen, "PWR", sub.power, 16, 32)
     _bar(screen, "HULL", sub.hull, 16, 50)
     draw_text(screen, f"DEPTH {sub.depth:6.1f} m", (16, 74), size=16, color=(180, 205, 220))
-    draw_text(screen, depth_zone_name(sub.depth), (16, 94), size=13, color=(120, 140, 155))
+    draw_text(screen, f"POSITION {sub.x:+7.1f} m", (16, 94), size=13, color=(120, 140, 155))
+    draw_text(screen, depth_zone_name(sub.depth), (16, 112), size=13, color=(120, 140, 155))
 
     if sub.depth >= sub.target_depth:
         draw_text(screen, f"TARGET {int(sub.target_depth)} m  -  REACHED",
-                  (16, 112), size=13, color=(90, 210, 150))
+                  (16, 130), size=13, color=(90, 210, 150))
     else:
         draw_text(screen, f"TARGET {int(sub.target_depth)} m  "
                   f"({sub.target_depth - sub.depth:.0f} m to go)",
-                  (16, 112), size=13, color=(120, 170, 190))
+                  (16, 130), size=13, color=(120, 170, 190))
     draw_text(screen, f"BALLAST {sub.ballast:.0f} kg  ->  DIVE {sub.dive_rate:.0f} m/s",
-              (16, 130), size=13, color=(120, 140, 155))
+              (16, 148), size=13, color=(120, 140, 155))
     draw_text(screen, f"PILOT  {str(sub.pilot).upper()}", (WIDTH - 16, 14),
               size=14, color=(150, 165, 178), anchor="topright")
 
