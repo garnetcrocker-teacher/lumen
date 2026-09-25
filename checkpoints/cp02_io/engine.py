@@ -181,7 +181,7 @@ class Submarine:
         # heavier ballast sinks faster: 40 kg -> the old default of 20 m/s
         self.dive_rate = 8.0 + self.ballast * 0.3          # meters / second
         self.rise_rate = 24.0
-        self.drift_speed = 60.0                            # pixels / second, sideways
+        self.drift_speed = 24.0                            # meters / second, sideways - matches rise_rate
         self.total_drift = 0.0                             # meters drifted sideways, either direction, running total
         self.light_on = True
         self.light_radius = 155

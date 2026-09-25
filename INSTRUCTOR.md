@@ -350,6 +350,21 @@ black further away; off-screen case draws nothing), and by running the
 *real* (non-headless-skip) drawing pipeline for 120 frames with the dummy
 SDL driver to confirm nothing crashes outside the check.py fast path.
 
+**Speed fix (post-launch):** the recharge circle's math was always
+correct and symmetric (confirmed by direct test: an equal raw-unit offset
+on either axis alone gives an identical edge distance), but `drift_speed`
+was 60 while `dive_rate`/`rise_rate` were ~20-24 - almost 3x faster
+sideways than vertically. Holding a direction for the same number of
+seconds covered far more horizontal ground than vertical, so the sub
+visibly exited horizontal range much faster than vertical range, even
+though the underlying circle was never actually elliptical. Fixed by
+dropping `drift_speed` from 60 to 24 (now matching `rise_rate` exactly).
+Re-verified with the same controlled "same seconds held, either axis"
+test - now closely symmetric (the small remaining gap is just
+`dive_rate` legitimately varying with ballast, same as it always has).
+Nothing in `check.py` asserts on the actual speed value, so no checkpoint
+regressions from the change.
+
 ### Sonar - what it's for, and where it's going
 
 cp04's sonar sweep isn't meant to stay decoration. The design intent is a
