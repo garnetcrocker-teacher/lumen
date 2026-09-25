@@ -350,20 +350,37 @@ black further away; off-screen case draws nothing), and by running the
 *real* (non-headless-skip) drawing pipeline for 120 frames with the dummy
 SDL driver to confirm nothing crashes outside the check.py fast path.
 
-**Speed fix (post-launch):** the recharge circle's math was always
-correct and symmetric (confirmed by direct test: an equal raw-unit offset
-on either axis alone gives an identical edge distance), but `drift_speed`
-was 60 while `dive_rate`/`rise_rate` were ~20-24 - almost 3x faster
-sideways than vertically. Holding a direction for the same number of
-seconds covered far more horizontal ground than vertical, so the sub
-visibly exited horizontal range much faster than vertical range, even
-though the underlying circle was never actually elliptical. Fixed by
-dropping `drift_speed` from 60 to 24 (now matching `rise_rate` exactly).
-Re-verified with the same controlled "same seconds held, either axis"
-test - now closely symmetric (the small remaining gap is just
-`dive_rate` legitimately varying with ballast, same as it always has).
-Nothing in `check.py` asserts on the actual speed value, so no checkpoint
-regressions from the change.
+**Misdiagnosis, then the real bug (post-launch):** reported symptom was
+"in range" over a much taller depth interval than horizontal interval.
+First guess was a speed mismatch (`drift_speed` 60 vs `dive_rate`/
+`rise_rate` ~20-24) and `drift_speed` was dropped to 24 to compensate -
+wrong fix. Speed has nothing to do with a static boundary check; that
+change was reverted back to 60 once the actual cause was found.
+
+The real bug: `distance_to_base_edge` compared `sub.x` and `sub.depth`
+as if they were on the same scale, but they aren't *once you look at what
+actually gets drawn* - `world_x_to_screen` doesn't scale x at all, while
+`world_y_to_screen` stretches depth by `PIXELS_PER_METER` (4x) to get a
+screen y. So the "circle" being checked was circular in raw world units,
+but the visible base (drawn via those same two screen-space functions)
+made it *look* like an ellipse 4x taller than it was wide - matching
+exactly what got reported: comfortably "in range" far above/below, but
+reading meaningful distances just left/right of the visible marker.
+
+Fixed by scaling the depth term the same way before measuring:
+`dy = (sub.depth - sub.base_depth) * PIXELS_PER_METER`, so the check now
+operates in the same screen-pixel space the base is actually drawn in.
+Also added a ring at radius `sub.base_radius` to `_draw_recharge_base`,
+drawn at the exact boundary `distance_to_base_edge` checks against - so
+the visible edge and the real one can never drift apart silently like
+this again. Verified directly: equal *screen-pixel* offsets on either
+axis now give identical edge distances (previously only equal *raw-unit*
+offsets did, which is precisely the distinction that caused this); the
+same 200-real-meter depth offset that used to still read "in range"
+now correctly reads far outside it. Pixel-sampled the new ring and
+confirmed it's the same radius on every axis. No `check.py` regressions
+either way, since nothing there depends on `drift_speed` or the specific
+scale of `distance_to_base_edge`'s inputs.
 
 ### Sonar - what it's for, and where it's going
 
