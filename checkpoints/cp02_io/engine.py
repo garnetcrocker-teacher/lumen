@@ -173,12 +173,15 @@ class Submarine:
         # heavier ballast sinks faster: 40 kg -> the old default of 20 m/s
         self.dive_rate = 8.0 + self.ballast * 0.3          # meters / second
         self.rise_rate = 24.0
+        self.drift_speed = 60.0                            # pixels / second, sideways
         self.light_on = True
         self.light_radius = 155
         self.alive = True
         # one-frame request flags - main.py sets these, the engine consumes them
         self.descending = False
         self.ascending = False
+        self.moving_left = False
+        self.moving_right = False
 
 
 # ---------------------------------------------------------------------------
@@ -264,6 +267,14 @@ def world_y_to_screen(sub, world_depth):
     return int(SUB_SCREEN_Y + (world_depth - sub.depth) * PIXELS_PER_METER)
 
 
+def world_x_to_screen(sub, world_x):
+    """Convert a horizontal world position to an x pixel, given where the sub
+    is now. Not used by anything yet - here for Module 7, when creatures get
+    a fixed (x, y) position in the world and need to scroll past like
+    everything else does as the sub moves."""
+    return int(WIDTH // 2 + (world_x - sub.x))
+
+
 def depth_zone_name(depth):
     """Rough name for the water at this depth (you build the real version in Module 9)."""
     if depth < 200:
@@ -295,6 +306,10 @@ def _draw_background(screen, sub):
 
 
 def _draw_snow(screen, sub):
+    # p[0] is a WORLD x position (not a screen x) - drawing it through
+    # world_x_to_screen, wrapped every WIDTH pixels, is what makes the field
+    # of specks drift sideways past a centered sub as sub.x changes, the same
+    # parallax cue the vertical scroll already gives you via sub.depth.
     if not _state.snow:
         for _ in range(90):
             _state.snow.append([random.uniform(0, WIDTH), random.uniform(0, HEIGHT),
@@ -305,12 +320,13 @@ def _draw_snow(screen, sub):
             p[1] -= HEIGHT
             p[0] = random.uniform(0, WIDTH)
         shade = int(70 + p[2] * 6)
+        draw_x = world_x_to_screen(sub, p[0]) % WIDTH
         screen.fill((shade, shade, shade + 10),
-                    (int(p[0]), int(p[1]), 2, 2))
+                    (draw_x, int(p[1]), 2, 2))
 
 
 def _draw_submarine(screen, sub):
-    x, y = WIDTH // 2 + int(sub.x), SUB_SCREEN_Y
+    x, y = WIDTH // 2, SUB_SCREEN_Y
     if sub.light_on and sub.power > 0:
         cone = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         pygame.draw.polygon(cone, (80, 110, 90, 26),
@@ -335,7 +351,7 @@ def _draw_darkness(screen, sub):
             rr = int(r * i / rings)
             a = int(murk * (1 - i / rings))
             pygame.draw.circle(hole, (0, 0, 0, a), (r, r), rr)
-        dark.blit(hole, (WIDTH // 2 + int(sub.x) - r, SUB_SCREEN_Y - r),
+        dark.blit(hole, (WIDTH // 2 - r, SUB_SCREEN_Y - r),
                   special_flags=pygame.BLEND_RGBA_SUB)
     screen.blit(dark, (0, 0))
 
@@ -424,7 +440,7 @@ def draw_banner(screen, line1, line2=""):
 
 
 # ---------------------------------------------------------------------------
-# System simulation the engine runs for you (Module 5+ you take parts over)
+# System simulation the engine runs for you
 # ---------------------------------------------------------------------------
 def _update_systems(sub):
     d = _state.dt
@@ -434,8 +450,14 @@ def _update_systems(sub):
         sub.depth += sub.dive_rate * d
     if sub.ascending:
         sub.depth = max(0.0, sub.depth - sub.rise_rate * d)
+    if sub.moving_left:
+        sub.x -= sub.drift_speed * d
+    if sub.moving_right:
+        sub.x += sub.drift_speed * d
     sub.descending = False          # must be re-requested every frame
     sub.ascending = False
+    sub.moving_left = False
+    sub.moving_right = False
 
     sub.oxygen = max(0.0, sub.oxygen - (0.55 + sub.depth / 5000.0) * d)
     if sub.light_on and sub.power > 0:

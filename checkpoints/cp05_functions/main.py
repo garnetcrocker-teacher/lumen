@@ -7,17 +7,13 @@ Module 5: Functions
 
 Your job this week is the TWO functions in the YOUR CODE section below:
 draw_dashboard, handle_controls. Unlike every checkpoint so far, the def
-lines aren't written for you - see the YOUR CODE section for exactly what
-to write.
+lines aren't already written for you (though they basically are)
+- see the YOUR CODE section for exactly what to write.
 
-frame() has always really done two separate jobs: drawing the dashboard, and
+frame() has so far done two separate jobs: drawing the dashboard, and
 reading the keyboard. Until now both jobs just sat inline, mixed together.
 This week you pull each one out into its own function - both are void
-functions (they do something and hand nothing back), but inside each one
-you'll be calling functions from Checkpoint 3 that DO return a value -
-hull_status and oxygen_state inside draw_dashboard, can_descend inside
-handle_controls. That's the real point this week: functions calling other
-functions, and a function not needing to return anything to still be useful.
+functions (they do something and hand nothing back).
 
 Nearly everything you need is sitting almost word-for-word inside your
 Checkpoint 4 main.py's frame() function - open it side by side with this
@@ -42,7 +38,8 @@ Checkpoints 2, 3, and 4 are carried into the BOTTOM of this file:
 Working reference versions are filled in so the game runs either way - if
 you did those checkpoints, paste your own versions in over them.
 
-Controls once it runs:  DOWN = dive,  UP = rise,  L = toggle light
+Controls once it runs:  DOWN = dive,  UP = rise,  LEFT/RIGHT = drift
+sideways,  L = toggle light
 """
 
 import engine
@@ -80,11 +77,21 @@ DIVE_MS = 400
 #     Everything frame() used to do with draw_hull_status/draw_hud_text:
 #     the hull status, the "O2: ..." line, the "STATUS: ..." line (colored
 #     to match - the if/elif/else that used to pick that color goes here
-#     too), and the controls-hint line at the bottom. `alert` is handed to
-#     you already worked out, same as frame() already had it.
+#     too), and the controls line at the bottom - now reading exactly
+#     "DOWN dive   UP rise   LEFT/RIGHT drift   L light   ESC quit" (updated
+#     for this week's new keys). `alert` is handed to you already worked
+#     out, since it's computed in frame before you pass it to this function.
 #
 # handle_controls(sub)
-#     Everything frame() used to do with DOWN / UP / L.
+#     Everything frame() used to do with handling DOWN / UP / L.
+#       (NOT DRAWING these controls though, that should be done above)
+#     PLUS something new this week, not in Checkpoint 4: LEFT and RIGHT now
+#     let you drift sideways. There's nothing to copy for this part - mirror
+#     the exact shape of your DOWN/UP lines instead:
+#         - LEFT held -> sub.moving_left = True
+#         - RIGHT held -> sub.moving_right = True
+#     The engine applies the actual movement; you're just setting the flag,
+#     same as you already do for sub.descending/sub.ascending.
 #
 # --- END YOUR CODE -----------------------------------------------------------
 

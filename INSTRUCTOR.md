@@ -139,7 +139,7 @@ proctored module tests.
 | **cp02_io** | Sep 1, 8 | 2 - Input/Processing/Output | Terminal pre-dive intake: `input()`, `int()`/`float()`, arithmetic, formatted `print()` | dive plan saved with correct types; briefing printed |
 | **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `clamp_battery()` (if), `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (3-arg `and` chain), `overall_alert()` (elif + `or`, order-sensitive) | 28 known input/output cases, boundary- and ordering-focused |
 | **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and a `while` launch countdown with an `if`/`else` inside it (`countdown_to_dive`, beeps via new `engine.play_tone`/`engine.wait`); `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop over `PULSE_COUNT` animating an outward-sweeping, battery-scaled sonar ping via `engine.now()` and `%` wraparound | boundary-focused value checks; countdown text/beep-order/wait-count checks; tick position + color; sonar radius at controlled `(power, t)` combinations |
-| **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s two real jobs (drawing the dashboard, reading the keyboard) split into two void functions students name and write entirely themselves - no `def` line given, unlike every other checkpoint. `draw_dashboard()` and `handle_controls()` both call cp03's value-returning functions internally, but neither returns anything itself | key-handling side effects incl. the `can_descend` gate; exact draw calls (text/position/size/color) with no extras or omissions, checked across all three alert levels |
+| **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s two real jobs (drawing the dashboard, reading the keyboard) split into two void functions students name and write entirely themselves - no `def` line given, unlike every other checkpoint. `draw_dashboard()` and `handle_controls()` both call cp03's value-returning functions internally, but neither returns anything itself. `handle_controls()` also gains unbounded sideways movement (`LEFT`/`RIGHT` -> `sub.moving_left`/`sub.moving_right`, two more flags in the exact shape of the existing ones) - genuinely new, not copyable from cp04 | key-handling side effects incl. the `can_descend` gate and the new drift flags; exact draw calls (text/position/size/color) with no extras or omissions, checked across all three alert levels |
 | **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | `save_dive_log()`, `load_best_depth()` with `try/except FileNotFoundError`; append discoveries to CSV | file written/read; missing file handled; best depth persists |
 | **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | Single creature -> `creatures = []`; spawn/append; `for c in creatures` update+draw; cull; `(x, y)` tuples; max/min/len over depths | many independent creatures; list ops correct; stats correct |
 | **cp08_strings** | Oct 27 | 8 - More About Strings | Species-code builder `f"{p}-{n:04d}"`; parse a scanned code back with slicing/`split`; normalize names; reverse/shift decode puzzle | code format; round-trip parse; decode returns expected string |
@@ -199,6 +199,42 @@ targets whatever surface you hand it (normally the world `screen`), so calling i
 directly from `frame()` will get swallowed by the dark the moment depth ramps up.
 This was the cp03 bug: the HULL/O2 status was drawn with `draw_text(screen, ...)`
 inside `frame()`, so it rendered before `_draw_darkness` and got covered.
+
+### Horizontal movement - what it's for, and where it's going
+
+cp05 adds `LEFT`/`RIGHT` (`sub.moving_left`/`sub.moving_right`, applied in
+`_update_systems` exactly like `descending`/`ascending`) as its "make this
+week substantial" addition, once two manufactured functions got cut and the
+checkpoint was left feeling too thin. `sub.x` already existed
+("horizontal drift") but was never wired to anything; it's now a real,
+unbounded world position - no floor or ceiling, matching how depth already
+has no ceiling.
+
+The sub stays pinned at screen center; `_draw_submarine` and `_draw_darkness`
+were changed to stop offsetting by `sub.x` (they used to, which used to make
+the sub visibly slide across a static background - backwards from the
+scrolling-world model). The world scrolls past it instead, the same mental
+model vertical movement already uses. New `world_x_to_screen(sub, world_x)`
+mirrors `world_y_to_screen` and is **not used by anything yet** - it's there
+for Module 7, when creatures get a fixed `(x, y)` in the world and need to
+scroll past the same way everything else does. This is the same
+"build the instrument now, cash it in later" pattern as cp04's sonar range.
+
+The one thing that needed solving to make sideways movement visible *this
+week*, before creatures exist to prove it's real: `_draw_background` is a
+pure vertical color gradient with zero horizontal variation, so scrolling
+it literally shows nothing. Fix was to reinterpret the existing snow
+particles' stored x as a world coordinate (they already existed, already
+had per-particle positions, already updated every frame) and draw them via
+`world_x_to_screen(...) % WIDTH`, tiling every `WIDTH` pixels - a working
+parallax cue today, using infrastructure that was already there, without
+needing to invent new background art.
+
+This is an `engine.py` change, made by the instructor, not a student
+hand-off - fully consistent with retiring the ownership-migration plan
+above. `handle_controls()` only sets the two flags, mirroring the existing
+`DOWN`/`UP` lines exactly; all the rendering and physics-application
+complexity stays engine-side, same as `draw_ring`/`play_tone` before it.
 
 ### Sonar - what it's for, and where it's going
 
@@ -279,28 +315,42 @@ Four review passes after the first cp04 draft, based on direct feedback:
   sonar test now expects a *subset* of the 4 pulses per frame (only the ones
   currently within `sonar_range`), not always all 4.
 
-### Ownership migration - the long-term goal
+### Ownership migration - retired (see below for why)
 
-The instructor's stated goal: by the end of the course, students should feel
-like they wrote the whole game, ideally including chunks of `engine.py` itself.
-**The mechanism is not "copy engine logic into `main.py`."** Code that
-conceptually belongs in the engine (a class, a simulation step, a reusable
-helper) should stay there - copying it into `main.py` just to make it
-student-touched would clutter the one file that's supposed to stay readable as
-"this week's work." Instead, the plan is to **open up `engine.py` itself for
-direct editing once a checkpoint has the background to do so** - the current
-"you never edit `engine.py`" rule is a scaffold for *now*, not a permanent
-architecture decision, and it's expected to loosen piece by piece.
+The original plan here was: by the end of the course, students should feel
+like they wrote the whole game, including chunks of `engine.py` itself, by
+**opening `engine.py` up for direct editing once a checkpoint had the
+background to do so** - a fenced YOUR CODE region inside the engine file,
+same convention as `main.py`, just relocated.
 
-Concretely, a later checkpoint's `main.py` instructions can point students
-*into* `engine.py` and say "this week, fill in the body of this one function/
-method there" - the same fenced-region convention already used in `main.py`,
-just relocated. Pygame-specific lines inside that region (surface creation,
-blend flags, alpha math) stay provided/commented even after the region opens
-up, since the course never teaches the pygame API itself - only the game-logic
-lines around them become the student's to write.
+**That plan is retired.** The reasoning that killed it: `main.py`'s
+carry-forward pattern only works as an exercise because each week's new
+code is genuinely new - there's no working version of this week's function
+sitting anywhere for a student to peek at before they write it. `engine.py`,
+by contrast, has been fully working and fully visible since Module 2. Asking
+a student to "write" a function that's already sitting there, complete, in
+a file they already have open, isn't an exercise - it's transcription. This
+is a different, deeper problem than the max_safe_depth/alert_color mistake
+(those were real logic, just unnecessarily split out); this is "the
+assignment has no puzzle in it at all," no matter how the region is fenced
+or how sparse the surrounding hints are.
 
-Rough roadmap, revisit as each module actually gets built:
+The distinction that survives: reproducing existing engine internals (the
+`Submarine` class, `world_y_to_screen`, anything already running) has this
+problem. Writing genuinely new content that doesn't exist anywhere yet -
+the `Creature` class(es) at Module 10/11, once creatures exist - does not,
+since there's nothing finished to copy. Whether that new content physically
+lives in `engine.py` or `main.py` is just a file-organization choice at that
+point, not a different kind of ownership.
+
+Softer alternative, not a graded exercise: nudge students to *read* through
+`engine.py` once they have the background to follow it (e.g. a one-line
+suggestion in a later briefing - "this is a good week to go read the
+Submarine class now that you know what a class is"), rather than asking them
+to reproduce it. Understanding beats rewriting-what-already-works here.
+
+Historical roadmap (superseded by the above, kept for context on what was
+tried and why it changed):
 
 - **Module 5 (Functions):** done as planned - `frame()`'s contents split into
   named functions in `main.py`. Didn't touch `engine.py`; the actual
@@ -340,25 +390,27 @@ Rough roadmap, revisit as each module actually gets built:
   catalog dict as student-owned from the start (in `main.py`, since that's new
   content, not a migration) rather than engine-managed state a checkpoint
   merely reads.
-- **Module 10 (Classes):** the first real `engine.py` hand-off candidate -
+- ~~**Module 10 (Classes):** the first real `engine.py` hand-off candidate -
   open up the `Submarine` class (and `Creature`) for students to author
-  directly in the engine file, with the pygame-facing bits still scaffolded.
-  This is where "I wrote the submarine" becomes literally true.
-- **Module 11 (Inheritance):** creature subclasses, likely also written
-  directly into (or alongside) the engine's class hierarchy rather than
-  main.py, once inheritance is on the table.
-- **Final project:** by this point as much of `engine.py` as is reasonable
-  should have passed through student hands at some point in the semester - the
-  irreducible remainder is the window/event-loop/raw-drawing plumbing nobody
-  in an intro course should be asked to write from scratch.
+  directly in the engine file... "I wrote the submarine" becomes literally
+  true.~~ **Retired** - the `Submarine` class already runs and is already
+  visible; asking students to rewrite it is the transcription problem above.
+  `Creature` (Module 10/11) is a different case - see below.
+- ~~**Module 11 (Inheritance):** creature subclasses, likely also written
+  directly into (or alongside) the engine's class hierarchy.~~ **Still
+  possibly true, but not as a "hand-off"** - if `Creature` subclasses get
+  written directly in `engine.py` rather than `main.py`, that's just a file
+  placement choice once creatures exist, not engine ownership migrating.
+- ~~**Final project:** by this point as much of `engine.py` as is reasonable
+  should have passed through student hands...~~ **Retired.** The goal now is
+  that students have written substantial, real code all semester (which
+  `main.py` alone already delivers) - not that they've specifically touched
+  the file named `engine.py`.
 
-This has a real infrastructure implication worth flagging now, not solving
-yet: once `engine.py` is partly student-edited, `tools/sync_engine.py`'s
-"copy one canonical engine.py into every checkpoint" model stops working as-is
-- a later checkpoint would need to carry forward the *previous* checkpoint's
-(possibly student-edited) `engine.py`, the same way `main.py` already carries
-its own history forward. Design that properly when Module 10 gets built, not
-before.
+The `tools/sync_engine.py` infrastructure concern this used to raise (a
+carry-forward-aware engine sync, once `engine.py` is partly student-edited)
+is moot - `engine.py` stays fully instructor-owned and identical across
+every checkpoint, same as `check.py` always has been. No sync rework needed.
 
 ---
 

@@ -46,7 +46,7 @@ def draw_dashboard(screen, sub, alert):
         color = (90, 200, 150)
     engine.draw_hud_text(f"STATUS: {alert}", (engine.WIDTH // 2, 66), size=14,
                          anchor="midtop", color=color)
-    engine.draw_hud_text("DOWN dive   UP rise   L light   ESC quit",
+    engine.draw_hud_text("DOWN dive   UP rise   LEFT/RIGHT drift   L light   ESC quit",
                          (16, engine.HEIGHT - 26), size=13, color=(120, 140, 155))
 
 
@@ -55,6 +55,10 @@ def handle_controls(sub):
         sub.descending = True
     if engine.key_down("UP"):
         sub.ascending = True
+    if engine.key_down("LEFT"):
+        sub.moving_left = True
+    if engine.key_down("RIGHT"):
+        sub.moving_right = True
     if engine.key_pressed("L"):
         sub.light_on = not sub.light_on
 

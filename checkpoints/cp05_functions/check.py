@@ -11,7 +11,7 @@ import sys
 
 os.environ["LUMEN_HEADLESS"] = "1"
 
-TOTAL_CHECKS = 13
+TOTAL_CHECKS = 15
 
 results = []
 
@@ -104,6 +104,22 @@ def main():
 
     try:
         sub = make_sub()
+        call_controls(sub, down=("LEFT",))
+        check("handle_controls: LEFT held -> sub.moving_left True",
+              sub.moving_left is True, f"sub.moving_left = {sub.moving_left!r}")
+    except Exception as exc:
+        check("handle_controls: LEFT held", False, repr(exc))
+
+    try:
+        sub = make_sub()
+        call_controls(sub, down=("RIGHT",))
+        check("handle_controls: RIGHT held -> sub.moving_right True",
+              sub.moving_right is True, f"sub.moving_right = {sub.moving_right!r}")
+    except Exception as exc:
+        check("handle_controls: RIGHT held", False, repr(exc))
+
+    try:
+        sub = make_sub()
         sub.light_on = True
         call_controls(sub, pressed=("L",))
         check("handle_controls: L pressed -> light_on True becomes False",
@@ -125,8 +141,12 @@ def main():
         sub.light_on = True
         call_controls(sub)
         check("handle_controls: no keys -> nothing changes",
-              sub.descending is False and sub.ascending is False and sub.light_on is True,
-              f"descending={sub.descending!r} ascending={sub.ascending!r} light_on={sub.light_on!r}")
+              sub.descending is False and sub.ascending is False
+              and sub.moving_left is False and sub.moving_right is False
+              and sub.light_on is True,
+              f"descending={sub.descending!r} ascending={sub.ascending!r} "
+              f"moving_left={sub.moving_left!r} moving_right={sub.moving_right!r} "
+              f"light_on={sub.light_on!r}")
     except Exception as exc:
         check("handle_controls: no keys", False, repr(exc))
 
@@ -171,7 +191,7 @@ def main():
     hint_line = next((c for c in text_calls if c["text"].startswith("DOWN dive")), None)
     check("draw_dashboard draws the controls-hint line",
           hint_line is not None
-          and hint_line["text"] == "DOWN dive   UP rise   L light   ESC quit"
+          and hint_line["text"] == "DOWN dive   UP rise   LEFT/RIGHT drift   L light   ESC quit"
           and hint_line["pos"] == (16, engine.HEIGHT - 26)
           and hint_line["size"] == 13
           and hint_line["color"] == (120, 140, 155),
