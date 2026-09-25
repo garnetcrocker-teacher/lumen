@@ -92,15 +92,13 @@ DIVE_MS = 400
 #     There's a recharge base somewhere in the world - a circular area,
 #     not a single exact point. sub.base_x/sub.base_depth mark its center,
 #     sub.base_radius its size, all in the same real meters as sub.x and
-#     sub.depth. Work out the straight-line (Euclidean) distance from the
-#     sub to the base's center, the same way you'd find the distance
-#     between two points on graph paper:
-#         dx = sub.x - sub.base_x
-#         dy = sub.depth - sub.base_depth
-#         distance = (dx ** 2 + dy ** 2) ** 0.5
-#     Subtract sub.base_radius to get how far outside the *edge* you are
-#     (0 or negative once you're inside it - you don't have to land on an
-#     exact pixel, just get within the circle), then:
+#     sub.depth. Find the straight-line distance from the sub to the
+#     base's center using the Pythagorean theorem - the sideways gap and
+#     the depth gap are the two legs of a right triangle, the straight-line
+#     distance is the hypotenuse. Subtract sub.base_radius to get how far
+#     outside the *edge* you are (0 or negative once you're inside it -
+#     you don't have to land on an exact pixel, just get within the
+#     circle), then:
 #         - 0 or negative (you're inside) -> return "IN RANGE"
 #         - otherwise -> return format_distance() of that edge distance
 #     Also value-returning, and also nothing to copy - this is new too.

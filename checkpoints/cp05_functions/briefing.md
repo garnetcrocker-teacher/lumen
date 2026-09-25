@@ -77,18 +77,13 @@ string, not a status word.
 The recharge base is a circle, not a single point, so "distance to it"
 really means "distance to its edge" - once you're inside, that's 0.
 `sub.base_x`/`sub.base_depth` mark the circle's center, `sub.base_radius`
-its size, all in the same real meters as `sub.x`/`sub.depth`. You work out
-the straight-line distance yourself - this is just the distance formula
-between two points:
+its size, all in the same real meters as `sub.x`/`sub.depth`.
 
-```
-dx = sub.x - sub.base_x
-dy = sub.depth - sub.base_depth
-distance = (dx ** 2 + dy ** 2) ** 0.5
-```
-
-Subtract `sub.base_radius` from that to get how far outside the *edge*
-you are - 0 or negative once you're inside - then:
+Find the straight-line distance from the sub to the base's center using
+the Pythagorean theorem - the sideways gap and the depth gap are the two
+legs of a right triangle, and the straight-line distance is the
+hypotenuse. Subtract `sub.base_radius` from that to get how far outside
+the *edge* you are - 0 or negative once you're inside - then:
 
 - 0 or negative (inside) -> return `"IN RANGE"`
 - otherwise -> return `format_distance()` of that edge distance
@@ -215,9 +210,9 @@ the grader runs the same check on the file you turn in.)
   `sub.base_x`, `sub.base_depth`, and `sub.base_radius` - five different
   values off the same object, which is exactly when passing the whole
   `sub` in makes more sense than five separate parameters.
-- `dx ** 2` and `dx * dx` do the same thing - use whichever you find more
-  readable. Either way, square both `dx` and `dy` *before* adding them,
-  and take the square root *after*.
+- Python's `**` operator handles both squaring and square roots
+  (`x ** 0.5` is a square root) - you don't need to `import math` for
+  this unless you'd rather use `math.sqrt()`.
 - `handle_controls` doesn't need `elif` - each key is its own independent
   `if`, exactly like before. `LEFT`/`RIGHT` are two more independent `if`s
   in the exact same style, not a special case.
