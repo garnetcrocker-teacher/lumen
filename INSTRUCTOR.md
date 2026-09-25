@@ -330,6 +330,26 @@ still 21 checks (two `distance_to_base` boundary cases, one for the
 rendered `BASE` line, line-count check at 5); solution still 21/21, blank
 stub still 0/21, no regressions on cp02/cp03/cp04.
 
+The base was invisible on screen until now - `check.py`/the dashboard
+readout were the only way to know it existed. `_draw_recharge_base`
+(engine.py, purely visual, no student involvement) fixes that: converts
+`(sub.base_x, sub.base_depth)` to a screen position via the existing
+`world_x_to_screen`/`world_y_to_screen`, then draws a small marker circle
+plus a glow using the pre-existing `draw_glow()` helper (the same additive
+soft-glow function already used elsewhere, not new code). Drawn *after*
+`_draw_darkness`, same placement as `_draw_target_line` - deliberately, so
+it reads as "the base emits its own light and stays visible regardless of
+how dark it is nearby," rather than being swallowed by the murk the way an
+unlit object would be. Explicitly kept simple per instructor direction -
+"doesn't need to be anything graphically detailed" - real visual design
+is deferred to whenever recharge bases become their own class. Skips
+drawing entirely once far enough off-screen (cheap bounds check before any
+blit). Verified with direct pixel sampling (marker color exactly matches
+at the computed screen position; glow visible partway out; untouched
+black further away; off-screen case draws nothing), and by running the
+*real* (non-headless-skip) drawing pipeline for 120 frames with the dummy
+SDL driver to confirm nothing crashes outside the check.py fast path.
+
 ### Sonar - what it's for, and where it's going
 
 cp04's sonar sweep isn't meant to stay decoration. The design intent is a

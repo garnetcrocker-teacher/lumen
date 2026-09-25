@@ -386,6 +386,20 @@ def _bar(screen, label, value, x, y, good=(80, 200, 140), bad=(210, 90, 80)):
     pygame.draw.rect(screen, col, (x + 46, y + 2, int(120 * k), 10))
 
 
+def _draw_recharge_base(screen, sub):
+    """The recharge base, drawn as a simple glowing marker - nothing fancy
+    yet, this gets a real look once bases become their own class. Drawn
+    with its own light (after _draw_darkness, same as _draw_target_line),
+    since the whole point is being able to spot it from a distance."""
+    bx = world_x_to_screen(sub, sub.base_x)
+    by = world_y_to_screen(sub, sub.base_depth)
+    if bx < -200 or bx > WIDTH + 200 or by < -200 or by > HEIGHT + 200:
+        return
+    draw_glow(screen, (bx, by), 90, (120, 220, 255))
+    pygame.draw.circle(screen, (170, 235, 250), (bx, by), 9)
+    pygame.draw.circle(screen, (120, 220, 255), (bx, by), 9, 2)
+
+
 def _draw_target_line(screen, sub):
     """A dashed line across the water at the pilot's target depth, once it's
     close enough to be on screen."""
@@ -583,6 +597,7 @@ def run(frame_fn, setup_fn=None, title="LUMEN - a descent"):
         frame_fn(sub, screen)
         _draw_submarine(screen, sub)
         _draw_darkness(screen, sub)
+        _draw_recharge_base(screen, sub)
         _draw_target_line(screen, sub)
         screen.blit(_state.hud_surface, (0, 0))    # dashboard on top - always visible
         _draw_base_hud(screen, sub)
