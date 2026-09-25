@@ -5,21 +5,27 @@ Module 5: Functions
     Run the game:      python main.py      (press ESC or close the window to quit)
     Check your work:    python check.py
 
-Your job this week is the TWO functions in the YOUR CODE section below:
-draw_dashboard, handle_controls. Unlike every checkpoint so far, the def
-lines aren't already written for you (though they basically are)
-- see the YOUR CODE section for exactly what to write.
+Your job this week is the THREE functions in the YOUR CODE section below:
+draw_dashboard, format_distance, handle_controls. Unlike every checkpoint
+so far, the def lines aren't already written for you - see the YOUR CODE
+section for exactly what to write.
 
 frame() has so far done two separate jobs: drawing the dashboard, and
 reading the keyboard. Until now both jobs just sat inline, mixed together.
-This week you pull each one out into its own function - both are void
-functions (they do something and hand nothing back).
+This week you pull each one out into its own function - both draw_dashboard
+and handle_controls are void functions (they do something and hand nothing
+back).
 
-Nearly everything you need is sitting almost word-for-word inside your
-Checkpoint 4 main.py's frame() function - open it side by side with this
-file. You're not writing new logic, you're deciding which existing lines
-belong together, giving that group a name and a parameter list, and writing
-the def line yourself.
+Most of draw_dashboard and handle_controls is sitting almost word-for-word
+inside your Checkpoint 4 main.py's frame() function - open it side by side
+with this file. For that part you're not writing new logic, you're deciding
+which existing lines belong together, giving that group a name and a
+parameter list, and writing the def line yourself.
+
+format_distance is different: it's genuinely new, there's nothing to copy
+for it anywhere. It's also your first value-returning function since
+Checkpoint 3 - it hands a string back to whatever calls it (draw_dashboard,
+in this case).
 
 Because nothing is pre-written this week, `python main.py` will crash with
 a NameError until both functions exist - that's expected, not a bug. Get
@@ -67,11 +73,19 @@ DIVE_MS = 400
 
 # --- BEGIN YOUR CODE (Checkpoint 5) -----------------------------------------
 #
-# Write two functions here. Open your Checkpoint 4 main.py's frame() next to
-# this file - nearly every line you need is already sitting in there,
-# word-for-word. Your job is deciding which lines belong together, and
-# writing a def line for each group yourself (name, parameters, no return
-# on either - both are void functions).
+# Write three functions here. Open your Checkpoint 4 main.py's frame() next
+# to this file for the first and last one - nearly every line you need is
+# already sitting in there, word-for-word.
+#
+# format_distance(meters) - returns a string, e.g. "340 m" or "1.2 km"
+#     sub.total_drift is a running total (built by the engine, in meters)
+#     of how far you've drifted sideways, either direction. Nothing to copy
+#     here - write the logic yourself:
+#         - below 1000, show it in meters, no decimal place: "340 m"
+#         - 1000 or above, show it in kilometers, one decimal place instead:
+#           "1.2 km"
+#     This is a value-returning function - it hands the string back to
+#     whatever calls it, instead of drawing or changing anything itself.
 #
 # draw_dashboard(screen, sub, alert)
 #     Everything frame() used to do with draw_hull_status/draw_hud_text:
@@ -82,6 +96,14 @@ DIVE_MS = 400
 #     for this week's new keys). `alert` is handed to you already worked
 #     out, since it's computed in frame before you pass it to this function.
 #
+#     One more line, and this one is new - nothing to copy for it either.
+#     Add a fourth draw_hud_text call: the text should read exactly
+#     "DRIFTED: " followed by whatever format_distance(sub.total_drift)
+#     returns. Put it in the bottom-right corner, mirroring the hint line's
+#     bottom-left spot: position (engine.WIDTH - 16, engine.HEIGHT - 26),
+#     anchor "topright", same size (13) and color (120, 140, 155) as the
+#     hint line.
+#
 # handle_controls(sub)
 #     Everything frame() used to do with handling DOWN / UP / L.
 #       (NOT DRAWING these controls though, that should be done above)
@@ -90,9 +112,13 @@ DIVE_MS = 400
 #     the exact shape of your DOWN/UP lines instead:
 #         - LEFT held -> sub.moving_left = True
 #         - RIGHT held -> sub.moving_right = True
-#     The engine applies the actual movement; you're just setting the flag,
-#     same as you already do for sub.descending/sub.ascending.
+#     The engine applies the actual movement and keeps the odometer; you're
+#     just setting the flag, same as you already do for sub.descending/
+#     sub.ascending.
 #
+# All three are void except format_distance, which returns a string - no
+# def line is written for you on any of them; name and parameters are your
+# call.
 # --- END YOUR CODE -----------------------------------------------------------
 
 

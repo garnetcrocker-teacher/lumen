@@ -139,7 +139,7 @@ proctored module tests.
 | **cp02_io** | Sep 1, 8 | 2 - Input/Processing/Output | Terminal pre-dive intake: `input()`, `int()`/`float()`, arithmetic, formatted `print()` | dive plan saved with correct types; briefing printed |
 | **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `clamp_battery()` (if), `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (3-arg `and` chain), `overall_alert()` (elif + `or`, order-sensitive) | 28 known input/output cases, boundary- and ordering-focused |
 | **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and a `while` launch countdown with an `if`/`else` inside it (`countdown_to_dive`, beeps via new `engine.play_tone`/`engine.wait`); `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop over `PULSE_COUNT` animating an outward-sweeping, battery-scaled sonar ping via `engine.now()` and `%` wraparound | boundary-focused value checks; countdown text/beep-order/wait-count checks; tick position + color; sonar radius at controlled `(power, t)` combinations |
-| **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s two real jobs (drawing the dashboard, reading the keyboard) split into two void functions students name and write entirely themselves - no `def` line given, unlike every other checkpoint. `draw_dashboard()` and `handle_controls()` both call cp03's value-returning functions internally, but neither returns anything itself. `handle_controls()` also gains unbounded sideways movement (`LEFT`/`RIGHT` -> `sub.moving_left`/`sub.moving_right`, two more flags in the exact shape of the existing ones) - genuinely new, not copyable from cp04 | key-handling side effects incl. the `can_descend` gate and the new drift flags; exact draw calls (text/position/size/color) with no extras or omissions, checked across all three alert levels |
+| **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s two real jobs (drawing the dashboard, reading the keyboard) split into two void functions students name and write entirely themselves - no `def` line given, unlike every other checkpoint. `handle_controls()` also gains unbounded sideways movement (`LEFT`/`RIGHT` -> `sub.moving_left`/`sub.moving_right`, two more flags in the exact shape of the existing ones) - genuinely new, not copyable from cp04. A third function, `format_distance(meters)`, is cp05's only value-returning function - it turns the engine's new `sub.total_drift` odometer into "340 m"/"1.2 km" and is called from inside `draw_dashboard()`, so students see a void function calling a value-returning one of their own | key-handling side effects incl. the `can_descend` gate and the new drift flags; exact draw calls (text/position/size/color) with no extras or omissions, checked across all three alert levels; `format_distance()`'s two formatting branches checked directly |
 | **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | `save_dive_log()`, `load_best_depth()` with `try/except FileNotFoundError`; append discoveries to CSV | file written/read; missing file handled; best depth persists |
 | **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | Single creature -> `creatures = []`; spawn/append; `for c in creatures` update+draw; cull; `(x, y)` tuples; max/min/len over depths | many independent creatures; list ops correct; stats correct |
 | **cp08_strings** | Oct 27 | 8 - More About Strings | Species-code builder `f"{p}-{n:04d}"`; parse a scanned code back with slicing/`split`; normalize names; reverse/shift decode puzzle | code format; round-trip parse; decode returns expected string |
@@ -235,6 +235,32 @@ hand-off - fully consistent with retiring the ownership-migration plan
 above. `handle_controls()` only sets the two flags, mirroring the existing
 `DOWN`/`UP` lines exactly; all the rendering and physics-application
 complexity stays engine-side, same as `draw_ring`/`play_tone` before it.
+
+### The odometer (`format_distance`) - why cp05 got a third function
+
+Even with sideways movement added, cp05's two functions were still mostly
+transcription (copy from Checkpoint 4) plus two one-line mirrors of the
+`DOWN`/`UP` pattern - not much genuinely new thinking. Rather than invent a
+third function that decomposes existing logic (the `alert_color`/
+`current_alert` mistake from earlier in this checkpoint's history), the fix
+adds a genuinely new mechanic tied to the movement feature itself: the
+engine now tracks `sub.total_drift`, a running total in meters of sideways
+distance covered in *either* direction (both `moving_left` and
+`moving_right` add to it in `_update_systems` - it never nets out to zero
+the way `sub.x` does, verified directly: 10s right then 10s left leaves
+`sub.x == 0.0` but `sub.total_drift == 1200.0`).
+
+Turning that number into something displayable - "340 m" below 1000,
+"1.2 km" at or above - needs real, novel `if`/`else` logic with no
+Checkpoint 4 source to copy, unlike everything else in this checkpoint.
+`format_distance(meters)` is that function: value-returning (cp05's only
+one), called from inside `draw_dashboard` (function-calling-function,
+squarely a Module 5 concept), and displayed as a fourth dashboard line,
+bottom-right, mirroring the hint line's bottom-left position. `check.py`
+tests it directly (two boundary cases) in addition to checking the
+rendered line. This is the kind of "new" cp05 was missing: not a thinner
+slice of existing code, but a small self-contained feature that happens to
+exercise exactly the write-a-function skill Module 5 is about.
 
 ### Sonar - what it's for, and where it's going
 

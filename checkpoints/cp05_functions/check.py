@@ -1,8 +1,8 @@
 """
 Checkpoint 5 auto-check.   Run:  python check.py
 
-Imports the two functions from main.py (draw_dashboard, handle_controls)
-and exercises them directly.
+Imports the three functions from main.py (draw_dashboard, format_distance,
+handle_controls) and exercises them directly.
 No window opens. Paste the final score into Canvas.
 """
 
@@ -11,7 +11,7 @@ import sys
 
 os.environ["LUMEN_HEADLESS"] = "1"
 
-TOTAL_CHECKS = 15
+TOTAL_CHECKS = 18
 
 results = []
 
@@ -49,7 +49,7 @@ def main():
         print(f"  [FAIL] could not import main.py: {exc!r}")
         return _report(0, TOTAL_CHECKS)
 
-    needed = ("draw_dashboard", "handle_controls")
+    needed = ("draw_dashboard", "format_distance", "handle_controls")
     for fn in needed:
         if not hasattr(student, fn):
             print(f"  [FAIL] main.py has no function called {fn}()")
@@ -57,7 +57,8 @@ def main():
 
     import engine
 
-    def make_sub(depth=0.0, oxygen=100.0, rated=1000.0, ballast=40.0, power=100.0, hull=100.0):
+    def make_sub(depth=0.0, oxygen=100.0, rated=1000.0, ballast=40.0, power=100.0,
+                 hull=100.0, total_drift=340.0):
         sub = engine.Submarine(engine.DEFAULT_DIVEPLAN)
         sub.depth = depth
         sub.oxygen = oxygen
@@ -65,7 +66,23 @@ def main():
         sub.ballast = ballast
         sub.power = power
         sub.hull = hull
+        sub.total_drift = total_drift
         return sub
+
+    # --- format_distance -------------------------------------------------------
+    try:
+        result = student.format_distance(340)
+        check("format_distance(340) returns \"340 m\"", result == "340 m",
+              f"got {result!r}")
+    except Exception as exc:
+        check("format_distance(340) returns \"340 m\"", False, repr(exc))
+
+    try:
+        result = student.format_distance(1500)
+        check("format_distance(1500) returns \"1.5 km\"", result == "1.5 km",
+              f"got {result!r}")
+    except Exception as exc:
+        check("format_distance(1500) returns \"1.5 km\"", False, repr(exc))
 
     # --- handle_controls -------------------------------------------------------
     real_down, real_pressed = engine.key_down, engine.key_pressed
@@ -197,8 +214,14 @@ def main():
           and hint_line["color"] == (120, 140, 155),
           f"got {hint_line}")
 
-    check("draw_dashboard draws exactly 3 lines of HUD text (no extras, none missing)",
-          len(text_calls) == 3, f"got {len(text_calls)}: {[c['text'] for c in text_calls]}")
+    drifted_line = next((c for c in text_calls if c["text"].startswith("DRIFTED")), None)
+    check("draw_dashboard draws the DRIFTED line correctly (text, position, size, color)",
+          drifted_line == {"text": "DRIFTED: 340 m", "pos": (engine.WIDTH - 16, engine.HEIGHT - 26),
+                            "size": 13, "color": (120, 140, 155), "anchor": "topright"},
+          f"got {drifted_line}")
+
+    check("draw_dashboard draws exactly 4 lines of HUD text (no extras, none missing)",
+          len(text_calls) == 4, f"got {len(text_calls)}: {[c['text'] for c in text_calls]}")
 
     for alert_case, depth, rated, oxygen in [("SAFE", 500, 1000, 80), ("DANGER", 1500, 1000, 80)]:
         calls = []

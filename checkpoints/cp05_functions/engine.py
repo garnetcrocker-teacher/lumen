@@ -174,6 +174,7 @@ class Submarine:
         self.dive_rate = 8.0 + self.ballast * 0.3          # meters / second
         self.rise_rate = 24.0
         self.drift_speed = 60.0                            # pixels / second, sideways
+        self.total_drift = 0.0                             # meters drifted sideways, either direction, running total
         self.light_on = True
         self.light_radius = 155
         self.alive = True
@@ -452,8 +453,10 @@ def _update_systems(sub):
         sub.depth = max(0.0, sub.depth - sub.rise_rate * d)
     if sub.moving_left:
         sub.x -= sub.drift_speed * d
+        sub.total_drift += sub.drift_speed * d
     if sub.moving_right:
         sub.x += sub.drift_speed * d
+        sub.total_drift += sub.drift_speed * d
     sub.descending = False          # must be re-requested every frame
     sub.ascending = False
     sub.moving_left = False

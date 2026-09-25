@@ -34,6 +34,13 @@ DIVE_MS = 400
 
 # --- BEGIN YOUR CODE (Checkpoint 5) -----------------------------------------
 
+def format_distance(meters):
+    if meters < 1000:
+        return f"{meters:.0f} m"
+    else:
+        return f"{meters / 1000:.1f} km"
+
+
 def draw_dashboard(screen, sub, alert):
     engine.draw_hull_status(screen, hull_status(sub.depth, sub.rated_depth))
     engine.draw_hud_text("O2: " + oxygen_state(sub.oxygen), (engine.WIDTH // 2, 46),
@@ -48,6 +55,9 @@ def draw_dashboard(screen, sub, alert):
                          anchor="midtop", color=color)
     engine.draw_hud_text("DOWN dive   UP rise   LEFT/RIGHT drift   L light   ESC quit",
                          (16, engine.HEIGHT - 26), size=13, color=(120, 140, 155))
+    engine.draw_hud_text("DRIFTED: " + format_distance(sub.total_drift),
+                         (engine.WIDTH - 16, engine.HEIGHT - 26), size=13,
+                         anchor="topright", color=(120, 140, 155))
 
 
 def handle_controls(sub):
