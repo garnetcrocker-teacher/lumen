@@ -41,6 +41,11 @@ def format_distance(meters):
         return f"{meters / 1000:.1f} km"
 
 
+def heading_to_target(offset_m):
+    direction = "RIGHT" if offset_m >= 0 else "LEFT"
+    return format_distance(abs(offset_m)) + " " + direction
+
+
 def draw_dashboard(screen, sub, alert):
     engine.draw_hull_status(screen, hull_status(sub.depth, sub.rated_depth))
     engine.draw_hud_text("O2: " + oxygen_state(sub.oxygen), (engine.WIDTH // 2, 46),
@@ -58,6 +63,9 @@ def draw_dashboard(screen, sub, alert):
     engine.draw_hud_text("DRIFTED: " + format_distance(sub.total_drift),
                          (engine.WIDTH - 16, engine.HEIGHT - 26), size=13,
                          anchor="topright", color=(120, 140, 155))
+    engine.draw_hud_text("SITE: " + heading_to_target(sub.target_x - sub.x),
+                         (engine.WIDTH // 2, 86), size=13,
+                         anchor="midtop", color=(120, 140, 155))
 
 
 def handle_controls(sub):

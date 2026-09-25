@@ -5,10 +5,10 @@ Module 5: Functions
     Run the game:      python main.py      (press ESC or close the window to quit)
     Check your work:    python check.py
 
-Your job this week is the THREE functions in the YOUR CODE section below:
-draw_dashboard, format_distance, handle_controls. Unlike every checkpoint
-so far, the def lines aren't already written for you - see the YOUR CODE
-section for exactly what to write.
+Your job this week is the FOUR functions in the YOUR CODE section below:
+draw_dashboard, format_distance, heading_to_target, handle_controls.
+Unlike every checkpoint so far, the def lines aren't already written for
+you - see the YOUR CODE section for exactly what to write.
 
 frame() has so far done two separate jobs: drawing the dashboard, and
 reading the keyboard. Until now both jobs just sat inline, mixed together.
@@ -22,16 +22,17 @@ with this file. For that part you're not writing new logic, you're deciding
 which existing lines belong together, giving that group a name and a
 parameter list, and writing the def line yourself.
 
-format_distance is different: it's genuinely new, there's nothing to copy
-for it anywhere. It's also your first value-returning function since
-Checkpoint 3 - it hands a string back to whatever calls it (draw_dashboard,
-in this case).
+format_distance and heading_to_target are different: they're genuinely
+new, there's nothing to copy for either one anywhere. Both are
+value-returning - each hands something back to whatever calls it, instead
+of drawing or changing anything itself. heading_to_target even calls
+format_distance from inside itself, and draw_dashboard calls both.
 
 Because nothing is pre-written this week, `python main.py` will crash with
-a NameError until both functions exist - that's expected, not a bug. Get
-both written (even roughly) before you try running it.
+a NameError until all four functions exist - that's expected, not a bug.
+Get them all written (even roughly) before you try running it.
 
-frame() below your code is provided - it's much shorter now, since your two
+frame() below your code is provided - it's much shorter now, since your
 functions do the work it used to do inline.
 
 Checkpoints 2, 3, and 4 are carried into the BOTTOM of this file:
@@ -73,8 +74,8 @@ DIVE_MS = 400
 
 # --- BEGIN YOUR CODE (Checkpoint 5) -----------------------------------------
 #
-# Write three functions here. Open your Checkpoint 4 main.py's frame() next
-# to this file for the first and last one - nearly every line you need is
+# Write four functions here. Open your Checkpoint 4 main.py's frame() next
+# to this file for the draw/control ones - nearly every line you need is
 # already sitting in there, word-for-word.
 #
 # format_distance(meters) - returns a string, e.g. "340 m" or "1.2 km"
@@ -87,6 +88,17 @@ DIVE_MS = 400
 #     This is a value-returning function - it hands the string back to
 #     whatever calls it, instead of drawing or changing anything itself.
 #
+# heading_to_target(offset_m) - returns a string, e.g. "340 m RIGHT" or
+#                                "1.2 km LEFT"
+#     The dive site isn't directly below where you started - sub.target_x
+#     holds its horizontal position, sub.x holds yours. Whatever calls this
+#     works out offset_m as (sub.target_x - sub.x) and hands it to you:
+#     positive means the site is to your RIGHT, negative means LEFT.
+#     Call your own format_distance() on the size of the offset (not the
+#     sign) to get the "340 m" / "1.2 km" part, then stick "RIGHT" or
+#     "LEFT" on the end depending on the sign of offset_m. Also
+#     value-returning, and also nothing to copy - this is new too.
+#
 # draw_dashboard(screen, sub, alert)
 #     Everything frame() used to do with draw_hull_status/draw_hud_text:
 #     the hull status, the "O2: ..." line, the "STATUS: ..." line (colored
@@ -96,13 +108,18 @@ DIVE_MS = 400
 #     for this week's new keys). `alert` is handed to you already worked
 #     out, since it's computed in frame before you pass it to this function.
 #
-#     One more line, and this one is new - nothing to copy for it either.
-#     Add a fourth draw_hud_text call: the text should read exactly
-#     "DRIFTED: " followed by whatever format_distance(sub.total_drift)
-#     returns. Put it in the bottom-right corner, mirroring the hint line's
-#     bottom-left spot: position (engine.WIDTH - 16, engine.HEIGHT - 26),
-#     anchor "topright", same size (13) and color (120, 140, 155) as the
-#     hint line.
+#     Two more lines, and these are new - nothing to copy for either.
+#
+#     Add a draw_hud_text call reading exactly "DRIFTED: " followed by
+#     whatever format_distance(sub.total_drift) returns. Put it in the
+#     bottom-right corner, mirroring the hint line's bottom-left spot:
+#     position (engine.WIDTH - 16, engine.HEIGHT - 26), anchor "topright",
+#     same size (13) and color (120, 140, 155) as the hint line.
+#
+#     Add another reading exactly "SITE: " followed by whatever
+#     heading_to_target(sub.target_x - sub.x) returns. Position
+#     (engine.WIDTH // 2, 86), anchor "midtop", same size (13) and color
+#     (120, 140, 155) as the other two.
 #
 # handle_controls(sub)
 #     Everything frame() used to do with handling DOWN / UP / L.
@@ -116,14 +133,14 @@ DIVE_MS = 400
 #     just setting the flag, same as you already do for sub.descending/
 #     sub.ascending.
 #
-# All three are void except format_distance, which returns a string - no
-# def line is written for you on any of them; name and parameters are your
-# call.
+# draw_dashboard and handle_controls are void; format_distance and
+# heading_to_target return a string. No def line is written for you on any
+# of them; name and parameters are your call.
 # --- END YOUR CODE -----------------------------------------------------------
 
 
 def frame(sub, screen):
-    """The engine calls this ~60 times a second. Much shorter now - your two
+    """The engine calls this ~60 times a second. Much shorter now - your
     functions from this week, plus draw_depth_ticks/draw_sonar_rings from
     Checkpoint 4, do all the actual work. Nothing to change here."""
     draw_sonar_rings(screen, sub)

@@ -165,6 +165,10 @@ class Submarine:
         self.depth = 0.0                                    # meters below surface
         self.x = 0.0                                        # horizontal drift
         self.target_depth = _as_float(plan.get("target_depth"), 300)
+        # the dive site isn't directly below where you entered the water -
+        # real launch points rarely are. Module 5 gives you a way to read
+        # this and steer toward it.
+        self.target_x = random.choice((-1, 1)) * random.uniform(250.0, 900.0)
         self.oxygen = 100.0                                 # percent
         self.power = _as_float(plan.get("battery_pct"), 100.0)   # percent
         self.ballast = _as_float(plan.get("ballast_kg"), 40.0)   # kg

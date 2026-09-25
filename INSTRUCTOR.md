@@ -139,7 +139,7 @@ proctored module tests.
 | **cp02_io** | Sep 1, 8 | 2 - Input/Processing/Output | Terminal pre-dive intake: `input()`, `int()`/`float()`, arithmetic, formatted `print()` | dive plan saved with correct types; briefing printed |
 | **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `clamp_battery()` (if), `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (3-arg `and` chain), `overall_alert()` (elif + `or`, order-sensitive) | 28 known input/output cases, boundary- and ordering-focused |
 | **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and a `while` launch countdown with an `if`/`else` inside it (`countdown_to_dive`, beeps via new `engine.play_tone`/`engine.wait`); `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop over `PULSE_COUNT` animating an outward-sweeping, battery-scaled sonar ping via `engine.now()` and `%` wraparound | boundary-focused value checks; countdown text/beep-order/wait-count checks; tick position + color; sonar radius at controlled `(power, t)` combinations |
-| **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s two real jobs (drawing the dashboard, reading the keyboard) split into two void functions students name and write entirely themselves - no `def` line given, unlike every other checkpoint. `handle_controls()` also gains unbounded sideways movement (`LEFT`/`RIGHT` -> `sub.moving_left`/`sub.moving_right`, two more flags in the exact shape of the existing ones) - genuinely new, not copyable from cp04. A third function, `format_distance(meters)`, is cp05's only value-returning function - it turns the engine's new `sub.total_drift` odometer into "340 m"/"1.2 km" and is called from inside `draw_dashboard()`, so students see a void function calling a value-returning one of their own | key-handling side effects incl. the `can_descend` gate and the new drift flags; exact draw calls (text/position/size/color) with no extras or omissions, checked across all three alert levels; `format_distance()`'s two formatting branches checked directly |
+| **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s two real jobs (drawing the dashboard, reading the keyboard) split into two void functions students name and write entirely themselves - no `def` line given, unlike every other checkpoint. `handle_controls()` also gains unbounded sideways movement (`LEFT`/`RIGHT` -> `sub.moving_left`/`sub.moving_right`, two more flags in the exact shape of the existing ones) - genuinely new, not copyable from cp04. Two more functions are value-returning: `format_distance(meters)` turns the engine's new `sub.total_drift` odometer into "340 m"/"1.2 km", and `heading_to_target(offset_m)` turns `sub.target_x - sub.x` (the dive site's horizontal offset from the sub) into "340 m RIGHT"/"1.2 km LEFT" by calling `format_distance` internally - both called from inside `draw_dashboard()`, so students see a void function calling value-returning ones of their own, one of which calls another | key-handling side effects incl. the `can_descend` gate and the new drift flags; exact draw calls (text/position/size/color) with no extras or omissions, checked across all three alert levels; `format_distance()`'s and `heading_to_target()`'s formatting branches each checked directly |
 | **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | `save_dive_log()`, `load_best_depth()` with `try/except FileNotFoundError`; append discoveries to CSV | file written/read; missing file handled; best depth persists |
 | **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | Single creature -> `creatures = []`; spawn/append; `for c in creatures` update+draw; cull; `(x, y)` tuples; max/min/len over depths | many independent creatures; list ops correct; stats correct |
 | **cp08_strings** | Oct 27 | 8 - More About Strings | Species-code builder `f"{p}-{n:04d}"`; parse a scanned code back with slicing/`split`; normalize names; reverse/shift decode puzzle | code format; round-trip parse; decode returns expected string |
@@ -246,14 +246,15 @@ headless/check.py mode. Verified instead by calling `_draw_base_hud`
 directly against a real (non-None) headless `pygame.Surface` with
 `draw_text` mocked, for both a positive and a negative `sub.x`.
 
-The point of exposing this now: it sets up a planned future mechanic
-where a sonar/creature alert names a world x (e.g. "Large Creature at
-x 500") and the player has to read their own `POSITION` line and decide
-which way to drift to close the gap - the same "build the instrument
-now, cash it in later" move as `world_x_to_screen`. Nothing consumes it
-yet; it's live starting now (`sub.x` exists in every checkpoint via the
-shared `Submarine.__init__`), but only reads as "0.0" until cp05's
-sideways movement gives it something to show.
+The point of exposing this now: it's the player-facing half of a
+navigation mechanic, the other half being `sub.target_x` and
+`heading_to_target()` (see below) - and the same groundwork pays off
+again later for a planned sonar/creature alert that names a world x
+(e.g. "Large Creature at x 500"), which the player will read against
+this same `POSITION` line. Same "build the instrument now, cash it in
+later" move as `world_x_to_screen`. `sub.x` exists in every checkpoint
+via the shared `Submarine.__init__`, but only reads as "0.0" until
+cp05's sideways movement gives it something to show.
 
 ### The odometer (`format_distance`) - why cp05 got a third function
 
@@ -272,14 +273,49 @@ the way `sub.x` does, verified directly: 10s right then 10s left leaves
 Turning that number into something displayable - "340 m" below 1000,
 "1.2 km" at or above - needs real, novel `if`/`else` logic with no
 Checkpoint 4 source to copy, unlike everything else in this checkpoint.
-`format_distance(meters)` is that function: value-returning (cp05's only
-one), called from inside `draw_dashboard` (function-calling-function,
-squarely a Module 5 concept), and displayed as a fourth dashboard line,
-bottom-right, mirroring the hint line's bottom-left position. `check.py`
-tests it directly (two boundary cases) in addition to checking the
-rendered line. This is the kind of "new" cp05 was missing: not a thinner
-slice of existing code, but a small self-contained feature that happens to
-exercise exactly the write-a-function skill Module 5 is about.
+`format_distance(meters)` is that function: value-returning, called from
+inside `draw_dashboard` (function-calling-function, squarely a Module 5
+concept), and displayed as a dashboard line, bottom-right, mirroring the
+hint line's bottom-left position. `check.py` tests it directly (two
+boundary cases) in addition to checking the rendered line. This is the
+kind of "new" cp05 was missing: not a thinner slice of existing code, but
+a small self-contained feature that happens to exercise exactly the
+write-a-function skill Module 5 is about.
+
+### The dive site (`heading_to_target`) - cp05's fourth function
+
+Once `POSITION` existed, the natural next question was "toward what?" -
+raw coordinates aren't interesting without something to navigate to.
+Rather than an arbitrary beacon, `Submarine.__init__` now also sets
+`sub.target_x`, a randomized (`random.uniform(250, 900)`, sign chosen at
+random too) horizontal offset for the dive site itself - the same site
+`target_depth` already describes the depth of. Thematically this is just
+completing the site's coordinates, not introducing a new concept: real
+dive sites aren't reliably directly below the entry point either.
+
+`heading_to_target(offset_m)` takes `sub.target_x - sub.x` (worked out by
+the caller, not the function itself - deliberately not a `sub`-typed
+parameter, so it stays a small pure function like `format_distance`) and
+returns e.g. `"340 m RIGHT"` or `"1.2 km LEFT"`, calling `format_distance`
+internally for the magnitude. That reuse matters: `format_distance` is now
+called from two different places (`draw_dashboard` directly, and from
+inside `heading_to_target`), which is what makes it a real function
+rather than a repeat of the `alert_color`/`current_alert` mistake - a
+function with only one caller and no duplication removed.
+
+Deliberately, the engine's own always-on HUD never reveals raw
+`sub.target_x` anywhere - only the student's own `draw_dashboard`, via a
+correct `heading_to_target()`, tells the player which way to go. That's
+what makes writing the function worth doing instead of ornamental: get it
+wrong and the game gives no navigation feedback at all.
+
+Verified end-to-end, not just via `check.py`: simulated drifting toward a
+random `target_x` for the exact number of frames needed to reach it,
+confirmed the heading distance shrank throughout and flipped direction
+word the moment the sub overshot the site. `check.py` grew from 18 to 21
+checks (two `heading_to_target` boundary cases, one for the new rendered
+`SITE` line, plus the line-count check updated from 4 to 5); solution
+still 21/21, blank stub still 0/21, no regressions on cp02/cp03/cp04.
 
 ### Sonar - what it's for, and where it's going
 
