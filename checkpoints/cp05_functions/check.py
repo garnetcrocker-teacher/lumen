@@ -58,7 +58,8 @@ def main():
     import engine
 
     def make_sub(depth=0.0, oxygen=100.0, rated=1000.0, ballast=40.0, power=100.0,
-                 hull=100.0, total_drift=340.0, base_x=460.0, base_radius=120.0):
+                 hull=100.0, total_drift=340.0, base_x=460.0, base_depth=None,
+                 base_radius=120.0):
         sub = engine.Submarine(engine.DEFAULT_DIVEPLAN)
         sub.depth = depth
         sub.oxygen = oxygen
@@ -68,7 +69,7 @@ def main():
         sub.hull = hull
         sub.total_drift = total_drift
         sub.base_x = base_x
-        sub.base_depth = depth        # keep the depth axis out of it - tests reason in x only
+        sub.base_depth = depth if base_depth is None else base_depth
         sub.base_radius = base_radius
         return sub
 
@@ -89,18 +90,22 @@ def main():
 
     # --- distance_to_base --------------------------------------------------------
     try:
-        result = student.distance_to_base(340)
-        check("distance_to_base(340) returns \"340 m\"", result == "340 m",
-              f"got {result!r}")
+        # sub.x defaults to 0.0: dx = 0 - 90 = -90, dy = 500 - 380 = 120
+        # real 2D distance = sqrt(90^2 + 120^2) = 150, minus a 30m radius = 120
+        sub = make_sub(depth=500.0, base_x=90.0, base_depth=380.0, base_radius=30.0)
+        result = student.distance_to_base(sub)
+        check("distance_to_base(sub) computes real straight-line distance (dx=90, dy=120 -> \"120 m\")",
+              result == "120 m", f"got {result!r}")
     except Exception as exc:
-        check("distance_to_base(340) returns \"340 m\"", False, repr(exc))
+        check("distance_to_base(sub) computes real straight-line distance", False, repr(exc))
 
     try:
-        result = student.distance_to_base(-75)
-        check("distance_to_base(-75) returns \"IN RANGE\"", result == "IN RANGE",
-              f"got {result!r}")
+        sub = make_sub(base_x=50.0, base_radius=120.0)   # dx=50, dy=0, distance=50, edge=50-120=-70
+        result = student.distance_to_base(sub)
+        check("distance_to_base(sub) returns \"IN RANGE\" when inside the base",
+              result == "IN RANGE", f"got {result!r}")
     except Exception as exc:
-        check("distance_to_base(-75) returns \"IN RANGE\"", False, repr(exc))
+        check("distance_to_base(sub) returns \"IN RANGE\" when inside the base", False, repr(exc))
 
     # --- handle_controls -------------------------------------------------------
     real_down, real_pressed = engine.key_down, engine.key_pressed

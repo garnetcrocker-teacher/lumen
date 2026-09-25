@@ -72,18 +72,26 @@ values) is the same idea as `hull_status` or `oxygen_state` from
 Checkpoint 3. Unlike those two functions, though, this one hands back a
 string, not a status word.
 
-### 2. `distance_to_base(edge_m)` - returns a string
+### 2. `distance_to_base(sub)` - returns a string
 
 The recharge base is a circle, not a single point, so "distance to it"
 really means "distance to its edge" - once you're inside, that's 0.
-`engine.distance_to_base_edge(sub)` (already written for you, in
-`engine.py`) works out that number: straight-line distance from the sub
-to the base's center, minus the radius. It comes out 0 or negative once
-you're inside. Whoever calls this function hands you that number as
-`edge_m`:
+`sub.base_x`/`sub.base_depth` mark the circle's center, `sub.base_radius`
+its size, all in the same real meters as `sub.x`/`sub.depth`. You work out
+the straight-line distance yourself - this is just the distance formula
+between two points:
 
-- `edge_m <= 0` (inside) -> return `"IN RANGE"`
-- otherwise -> return `format_distance(edge_m)`
+```
+dx = sub.x - sub.base_x
+dy = sub.depth - sub.base_depth
+distance = (dx ** 2 + dy ** 2) ** 0.5
+```
+
+Subtract `sub.base_radius` from that to get how far outside the *edge*
+you are - 0 or negative once you're inside - then:
+
+- 0 or negative (inside) -> return `"IN RANGE"`
+- otherwise -> return `format_distance()` of that edge distance
 
 Nothing to copy here either - it's new, same as `format_distance`. Notice
 this one calls that one: a function you wrote calling another function you
@@ -111,10 +119,9 @@ corner - mirroring the hint line's spot in the bottom-left. Same size (13)
 and color (`(120, 140, 155)`) as the hint line, position
 `(engine.WIDTH - 16, engine.HEIGHT - 26)`, anchor `"topright"`.
 
-Call `distance_to_base(engine.distance_to_base_edge(sub))` and draw the
-result as `"BASE: " + distance_to_base(engine.distance_to_base_edge(sub))`,
-at `(engine.WIDTH // 2, 86)`, anchor `"midtop"`, same size and color as
-the other two.
+Call `distance_to_base(sub)` and draw the result as
+`"BASE: " + distance_to_base(sub)`, at `(engine.WIDTH // 2, 86)`, anchor
+`"midtop"`, same size and color as the other two.
 
 ### 4. `handle_controls(sub)` - void
 
@@ -178,8 +185,11 @@ drain for as long as you sit there.
 
 - `format_distance()` formats both a sub-1000 and an over-1000 value
   correctly
-- `distance_to_base()` returns `"IN RANGE"` for a value at or below 0, and
-  uses `format_distance()` correctly for the size otherwise
+- `distance_to_base()` computes the real straight-line distance to the
+  base correctly (checked with a sub positioned off-axis in both `x` and
+  `depth` at once, so an implementation that only checks one axis won't
+  pass), returns `"IN RANGE"` once inside, and uses `format_distance()`
+  correctly for the size otherwise
 - `handle_controls()` sets `sub.descending` / `sub.ascending` /
   `sub.moving_left` / `sub.moving_right` / `sub.light_on` correctly for
   different key combinations, including that `DOWN` is correctly blocked
@@ -201,10 +211,13 @@ the grader runs the same check on the file you turn in.)
   are the two functions here with no source to copy from.
 - A function's parameters are just "whatever the lines inside it need from
   outside." If a line uses `screen`, `sub`, or `alert`, that's a parameter.
-- `distance_to_base` doesn't need `sub` as a parameter at all - it only
-  needs the one number (`edge_m`) that whoever calls it already worked
-  out (using `engine.distance_to_base_edge(sub)`). Compare that to
-  `draw_dashboard`, which does need `sub`.
+  `distance_to_base` needs `sub`, since it reads `sub.x`, `sub.depth`,
+  `sub.base_x`, `sub.base_depth`, and `sub.base_radius` - five different
+  values off the same object, which is exactly when passing the whole
+  `sub` in makes more sense than five separate parameters.
+- `dx ** 2` and `dx * dx` do the same thing - use whichever you find more
+  readable. Either way, square both `dx` and `dy` *before* adding them,
+  and take the square root *after*.
 - `handle_controls` doesn't need `elif` - each key is its own independent
   `if`, exactly like before. `LEFT`/`RIGHT` are two more independent `if`s
   in the exact same style, not a special case.

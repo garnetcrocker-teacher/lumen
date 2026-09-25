@@ -286,12 +286,12 @@ def world_x_to_screen(sub, world_x):
     return int(WIDTH // 2 + (world_x - sub.x) * PIXELS_PER_METER)
 
 
-def distance_to_base_edge(sub):
+def _distance_to_base_edge(sub):
     """How far outside the recharge base's edge the sub currently is, in
-    real meters - the same units as DEPTH, POSITION, and every other
-    distance readout in the game. Straight-line distance to (base_x,
-    base_depth), minus base_radius. 0 or negative once inside; you don't
-    need to land on an exact point, just get within the circle."""
+    real meters - straight-line distance to (base_x, base_depth), minus
+    base_radius. 0 or negative once inside. Internal only - Checkpoint 5
+    has students do this same calculation themselves in main.py; this is
+    just what the engine uses to decide when to actually recharge."""
     dx = sub.x - sub.base_x
     dy = sub.depth - sub.base_depth
     return (dx * dx + dy * dy) ** 0.5 - sub.base_radius
@@ -392,12 +392,13 @@ def _bar(screen, label, value, x, y, good=(80, 200, 140), bad=(210, 90, 80)):
 def _draw_recharge_base(screen, sub):
     """The recharge base, drawn as a simple glowing marker plus a ring at
     its actual recharge radius - nothing fancy yet, this gets a real look
-    once bases become their own class. distance_to_base_edge checks a true
-    circle in real meters (dx and dy both unscaled, matching DEPTH/
-    POSITION); world_x_to_screen now scales by PIXELS_PER_METER exactly
-    like world_y_to_screen does, so that same circle also renders as a
-    true circle here, not an ellipse - position and radius both go
-    through the same conversion, so what's checked and what's drawn are
+    once bases become their own class. The real boundary is a true circle
+    in real meters (dx and dy both unscaled, matching DEPTH/POSITION);
+    world_x_to_screen scales by PIXELS_PER_METER exactly like
+    world_y_to_screen does, so that same circle also renders as a true
+    circle here, not an ellipse - position and radius both go through the
+    same conversion, so what's checked (by _distance_to_base_edge, and by
+    students' own distance_to_base in Checkpoint 5) and what's drawn are
     the same shape. Drawn with its own light (after _draw_darkness, same
     as _draw_target_line), since the whole point is being able to spot it
     from a distance."""
@@ -507,7 +508,7 @@ def _update_systems(sub):
     sub.moving_left = False
     sub.moving_right = False
 
-    if distance_to_base_edge(sub) <= 0:
+    if _distance_to_base_edge(sub) <= 0:
         sub.oxygen = min(100.0, sub.oxygen + 8.0 * d)      # inside the recharge base - refill
         sub.power = min(100.0, sub.power + 6.0 * d)
     else:

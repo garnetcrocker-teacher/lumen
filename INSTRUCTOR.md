@@ -139,7 +139,7 @@ proctored module tests.
 | **cp02_io** | Sep 1, 8 | 2 - Input/Processing/Output | Terminal pre-dive intake: `input()`, `int()`/`float()`, arithmetic, formatted `print()` | dive plan saved with correct types; briefing printed |
 | **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `clamp_battery()` (if), `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (3-arg `and` chain), `overall_alert()` (elif + `or`, order-sensitive) | 28 known input/output cases, boundary- and ordering-focused |
 | **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and a `while` launch countdown with an `if`/`else` inside it (`countdown_to_dive`, beeps via new `engine.play_tone`/`engine.wait`); `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop over `PULSE_COUNT` animating an outward-sweeping, battery-scaled sonar ping via `engine.now()` and `%` wraparound | boundary-focused value checks; countdown text/beep-order/wait-count checks; tick position + color; sonar radius at controlled `(power, t)` combinations |
-| **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s two real jobs (drawing the dashboard, reading the keyboard) split into two void functions students name and write entirely themselves - no `def` line given, unlike every other checkpoint. `handle_controls()` also gains unbounded sideways movement (`LEFT`/`RIGHT` -> `sub.moving_left`/`sub.moving_right`, two more flags in the exact shape of the existing ones) - genuinely new, not copyable from cp04. Two more functions are value-returning: `format_distance(meters)` turns the engine's new `sub.total_drift` odometer into "340 m"/"1.2 km", and `distance_to_base(edge_m)` turns `engine.distance_to_base_edge(sub)` (distance to the edge of a circular recharge base - depth counts, not just sideways position - that refills O2/power instead of draining them while the sub sits inside it) into "340 m"/"IN RANGE" by calling `format_distance` internally - both called from inside `draw_dashboard()`, so students see a void function calling value-returning ones of their own, one of which calls another | key-handling side effects incl. the `can_descend` gate and the new drift flags; exact draw calls (text/position/size/color) with no extras or omissions, checked across all three alert levels; `format_distance()`'s and `distance_to_base()`'s formatting branches each checked directly |
+| **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s two real jobs (drawing the dashboard, reading the keyboard) split into two void functions students name and write entirely themselves - no `def` line given, unlike every other checkpoint. `handle_controls()` also gains unbounded sideways movement (`LEFT`/`RIGHT` -> `sub.moving_left`/`sub.moving_right`, two more flags in the exact shape of the existing ones) - genuinely new, not copyable from cp04. Two more functions are value-returning: `format_distance(meters)` turns the engine's new `sub.total_drift` odometer into "340 m"/"1.2 km", and `distance_to_base(sub)` computes the real straight-line distance to the edge of a circular recharge base itself (`dx`/`dy`/sqrt/subtract radius - depth counts, not just sideways position; the base refills O2/power instead of draining them while the sub sits inside it) and turns that into "340 m"/"IN RANGE" by calling `format_distance` internally - both called from inside `draw_dashboard()`, so students see a void function calling value-returning ones of their own, one of which calls another | key-handling side effects incl. the `can_descend` gate and the new drift flags; exact draw calls (text/position/size/color) with no extras or omissions, checked across all three alert levels; `format_distance()`'s and `distance_to_base()`'s formatting branches each checked directly |
 | **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | `save_dive_log()`, `load_best_depth()` with `try/except FileNotFoundError`; append discoveries to CSV | file written/read; missing file handled; best depth persists |
 | **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | Single creature -> `creatures = []`; spawn/append; `for c in creatures` update+draw; cull; `(x, y)` tuples; max/min/len over depths | many independent creatures; list ops correct; stats correct |
 | **cp08_strings** | Oct 27 | 8 - More About Strings | Species-code builder `f"{p}-{n:04d}"`; parse a scanned code back with slicing/`split`; normalize names; reverse/shift decode puzzle | code format; round-trip parse; decode returns expected string |
@@ -300,19 +300,37 @@ draining oxygen/power to refilling them (8%/s oxygen, 6%/s power, both
 capped at 100). Hull decay is untouched either way; the base recharges
 consumables, it doesn't repair damage.
 
-The geometry itself is instructor-side: `engine.distance_to_base_edge(sub)`
-computes straight-line distance to `(base_x, base_depth)` minus
-`base_radius` (0 or negative once inside), living next to
-`world_x_to_screen`/`world_y_to_screen` as another engine-owned spatial
-helper - sqrt-based 2D distance is scope creep for a "how do I write a
-function" checkpoint, so it's handed to students as a given, the same way
-`hull_status`'s threshold values are given rather than derived.
+**Revision:** originally the Euclidean distance itself lived engine-side
+(`engine.distance_to_base_edge(sub)`, reasoned as scope creep for a "how
+do I write a function" checkpoint), with `distance_to_base(edge_m)` doing
+nothing but a threshold check on a number the engine had already handed
+it - correctly called out as too thin an extension to be worth its own
+function. sqrt-based 2D distance turned out not to be too much for
+Module 5 after all. The engine's copy is now `_distance_to_base_edge`
+(private, used only inside `_update_systems` for the actual recharge
+mechanic - engine logic can't depend on student code being correct or
+even present). Students now write `distance_to_base(sub)` in full:
 
-`distance_to_base(edge_m)` is what students write: `edge_m <= 0` returns
-`"IN RANGE"`, otherwise it returns `format_distance(edge_m)`. That reuse
-matters: `format_distance` is now called from two different places
-(`draw_dashboard` directly, and from inside `distance_to_base`), which is
-what keeps it a real function rather than a repeat of the
+```
+dx = sub.x - sub.base_x
+dy = sub.depth - sub.base_depth
+distance = (dx ** 2 + dy ** 2) ** 0.5
+edge_m = distance - sub.base_radius
+```
+
+then the same `edge_m <= 0 -> "IN RANGE"` / `format_distance(edge_m)`
+branch as before. Taking `sub` as the parameter (rather than a
+pre-computed `edge_m`) is deliberate - it reads five different values off
+one object, which is exactly the case for passing the object itself
+rather than unpacking it into five parameters. `check.py`'s direct test
+now positions the sub off-axis in *both* `x` and `depth` at once (a
+90/120/150 triangle), so an implementation that only checks one axis - an
+easy mistake once the full formula is student-written - fails clearly
+instead of accidentally passing on the old x-only-shaped test.
+
+That reuse still matters: `format_distance` is called from two different
+places (`draw_dashboard` directly, and from inside `distance_to_base`),
+which is what keeps it a real function rather than a repeat of the
 `alert_color`/`current_alert` mistake - a function with only one caller
 and no duplication removed. Deliberately, the engine's own always-on HUD
 never reveals raw `base_x`/`base_depth` anywhere - only the student's own

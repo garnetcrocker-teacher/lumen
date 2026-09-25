@@ -41,7 +41,11 @@ def format_distance(meters):
         return f"{meters / 1000:.1f} km"
 
 
-def distance_to_base(edge_m):
+def distance_to_base(sub):
+    dx = sub.x - sub.base_x
+    dy = sub.depth - sub.base_depth
+    distance = (dx ** 2 + dy ** 2) ** 0.5
+    edge_m = distance - sub.base_radius
     if edge_m <= 0:
         return "IN RANGE"
     return format_distance(edge_m)
@@ -64,7 +68,7 @@ def draw_dashboard(screen, sub, alert):
     engine.draw_hud_text("DRIFTED: " + format_distance(sub.total_drift),
                          (engine.WIDTH - 16, engine.HEIGHT - 26), size=13,
                          anchor="topright", color=(120, 140, 155))
-    engine.draw_hud_text("BASE: " + distance_to_base(engine.distance_to_base_edge(sub)),
+    engine.draw_hud_text("BASE: " + distance_to_base(sub),
                          (engine.WIDTH // 2, 86), size=13,
                          anchor="midtop", color=(120, 140, 155))
 

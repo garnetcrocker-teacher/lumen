@@ -88,15 +88,21 @@ DIVE_MS = 400
 #     This is a value-returning function - it hands the string back to
 #     whatever calls it, instead of drawing or changing anything itself.
 #
-# distance_to_base(edge_m) - returns a string, e.g. "340 m" or "IN RANGE"
+# distance_to_base(sub) - returns a string, e.g. "340 m" or "IN RANGE"
 #     There's a recharge base somewhere in the world - a circular area,
-#     not a single exact point. engine.distance_to_base_edge(sub) works
-#     out how far outside that circle's edge you currently are, in meters
+#     not a single exact point. sub.base_x/sub.base_depth mark its center,
+#     sub.base_radius its size, all in the same real meters as sub.x and
+#     sub.depth. Work out the straight-line (Euclidean) distance from the
+#     sub to the base's center, the same way you'd find the distance
+#     between two points on graph paper:
+#         dx = sub.x - sub.base_x
+#         dy = sub.depth - sub.base_depth
+#         distance = (dx ** 2 + dy ** 2) ** 0.5
+#     Subtract sub.base_radius to get how far outside the *edge* you are
 #     (0 or negative once you're inside it - you don't have to land on an
-#     exact pixel, just get within the circle). Whoever calls this hands
-#     you that number as edge_m:
-#         - edge_m <= 0 (you're inside) -> return "IN RANGE"
-#         - otherwise -> return format_distance(edge_m)
+#     exact pixel, just get within the circle), then:
+#         - 0 or negative (you're inside) -> return "IN RANGE"
+#         - otherwise -> return format_distance() of that edge distance
 #     Also value-returning, and also nothing to copy - this is new too.
 #
 # draw_dashboard(screen, sub, alert)
@@ -117,9 +123,9 @@ DIVE_MS = 400
 #     same size (13) and color (120, 140, 155) as the hint line.
 #
 #     Add another reading exactly "BASE: " followed by whatever
-#     distance_to_base(engine.distance_to_base_edge(sub)) returns.
-#     Position (engine.WIDTH // 2, 86), anchor "midtop", same size (13)
-#     and color (120, 140, 155) as the other two.
+#     distance_to_base(sub) returns. Position (engine.WIDTH // 2, 86),
+#     anchor "midtop", same size (13) and color (120, 140, 155) as the
+#     other two.
 #
 # handle_controls(sub)
 #     Everything frame() used to do with handling DOWN / UP / L.
