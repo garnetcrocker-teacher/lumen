@@ -5,18 +5,31 @@ Module 5: Functions
     Run the game:      python main.py      (press ESC or close the window to quit)
     Check your work:    python check.py
 
-Your job this week is the FOUR functions in the YOUR CODE section below:
-current_alert, alert_color, handle_controls, draw_dashboard.
+Your job this week is the TWO functions in the YOUR CODE section below:
+draw_dashboard, handle_controls. Unlike every checkpoint so far, the def
+lines aren't written for you - see the YOUR CODE section for exactly what
+to write.
 
-Until now, every function you've written has been a single, self-contained
-calculation - given some numbers, work out an answer. This week your
-functions call OTHER functions - the ones you already wrote in Checkpoints 3
-and 4 - and replace code that used to just sit directly inside frame(). Two
-of your four functions return a value; two don't return anything at all,
-they just do something (drawing, or changing sub's state). That's the
-difference between a value-returning function and a void function.
+frame() has always really done two separate jobs: drawing the dashboard, and
+reading the keyboard. Until now both jobs just sat inline, mixed together.
+This week you pull each one out into its own function - both are void
+functions (they do something and hand nothing back), but inside each one
+you'll be calling functions from Checkpoint 3 that DO return a value -
+hull_status and oxygen_state inside draw_dashboard, can_descend inside
+handle_controls. That's the real point this week: functions calling other
+functions, and a function not needing to return anything to still be useful.
 
-frame() below your code is provided - it's much shorter now, since your four
+Nearly everything you need is sitting almost word-for-word inside your
+Checkpoint 4 main.py's frame() function - open it side by side with this
+file. You're not writing new logic, you're deciding which existing lines
+belong together, giving that group a name and a parameter list, and writing
+the def line yourself.
+
+Because nothing is pre-written this week, `python main.py` will crash with
+a NameError until both functions exist - that's expected, not a bug. Get
+both written (even roughly) before you try running it.
+
+frame() below your code is provided - it's much shorter now, since your two
 functions do the work it used to do inline.
 
 Checkpoints 2, 3, and 4 are carried into the BOTTOM of this file:
@@ -56,75 +69,37 @@ DIVE_FREQ = 220
 DIVE_MS = 400
 
 # --- BEGIN YOUR CODE (Checkpoint 5) -----------------------------------------
-
-def current_alert(sub):
-    """Combine the hull and oxygen readouts into one overall alert level -
-    the same three lines frame() used to run inline, now packaged into a
-    single reusable, value-returning function.
-
-    Use your Checkpoint 3 functions: get the hull status from sub.depth and
-    sub.rated_depth, get the oxygen state from sub.oxygen, then combine the
-    two with overall_alert() and return whatever it gives you.
-    """
-    return "SAFE"
-
-
-def alert_color(alert):
-    """Return the RGB color tuple that matches an alert level:
-
-        "DANGER"   -> (230, 90, 80)
-        "WARNING"  -> (230, 190, 90)
-        anything else -> (90, 200, 150)
-
-    A function's return value doesn't have to be a number or string - a
-    tuple works fine too.
-    """
-    return (90, 200, 150)
-
-
-def handle_controls(sub):
-    """Read the keyboard and update sub accordingly - everything frame()
-    used to do with DOWN/UP/L, now living in its own function. This one's a
-    void function: it changes sub's attributes directly and returns nothing.
-
-        - DOWN held and can_descend(sub.ballast, sub.power, sub.hull) is
-          True -> sub.descending = True
-        - UP held -> sub.ascending = True
-        - L just pressed (not held) -> flip sub.light_on
-    """
-    pass
-
-
-def draw_dashboard(screen, sub, alert):
-    """Draw every HUD readout except the depth gauge and sonar - everything
-    frame() used to do with draw_hull_status/draw_hud_text, now living in
-    its own void function. Takes the alert level as a parameter instead of
-    recomputing it, since frame() already worked it out via current_alert().
-
-        - engine.draw_hull_status(screen, ...) with the current hull status
-          (hull_status(sub.depth, sub.rated_depth))
-        - engine.draw_hud_text("O2: " + <oxygen state>,
-          (engine.WIDTH // 2, 46), size=15, anchor="midtop",
-          color=(150, 190, 210))
-        - engine.draw_hud_text(f"STATUS: {alert}", (engine.WIDTH // 2, 66),
-          size=14, anchor="midtop", color=<the matching alert color - you
-          just wrote a function for exactly this>)
-        - engine.draw_hud_text("DOWN dive   UP rise   L light   ESC quit",
-          (16, engine.HEIGHT - 26), size=13, color=(120, 140, 155))
-    """
-    pass
-
+#
+# Write two functions here. Open your Checkpoint 4 main.py's frame() next to
+# this file - nearly every line you need is already sitting in there,
+# word-for-word. Your job is deciding which lines belong together, and
+# writing a def line for each group yourself (name, parameters, no return
+# on either - both are void functions).
+#
+# draw_dashboard(screen, sub, alert)
+#     Everything frame() used to do with draw_hull_status/draw_hud_text:
+#     the hull status, the "O2: ..." line, the "STATUS: ..." line (colored
+#     to match - the if/elif/else that used to pick that color goes here
+#     too), and the controls-hint line at the bottom. `alert` is handed to
+#     you already worked out, same as frame() already had it.
+#
+# handle_controls(sub)
+#     Everything frame() used to do with DOWN / UP / L.
+#
 # --- END YOUR CODE -----------------------------------------------------------
 
 
 def frame(sub, screen):
-    """The engine calls this ~60 times a second. Much shorter now - your
-    four functions from this week, plus draw_depth_ticks/draw_sonar_rings
-    from Checkpoint 4, do all the actual work. Nothing to change here."""
+    """The engine calls this ~60 times a second. Much shorter now - your two
+    functions from this week, plus draw_depth_ticks/draw_sonar_rings from
+    Checkpoint 4, do all the actual work. Nothing to change here."""
     draw_sonar_rings(screen, sub)
     draw_depth_ticks(screen, sub)
 
-    alert = current_alert(sub)
+    hull = hull_status(sub.depth, sub.rated_depth)
+    oxy = oxygen_state(sub.oxygen)
+    alert = overall_alert(hull, oxy)
+
     draw_dashboard(screen, sub, alert)
     handle_controls(sub)
 

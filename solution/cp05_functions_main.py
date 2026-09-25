@@ -1,5 +1,5 @@
 """
-INSTRUCTOR REFERENCE - a correct Checkpoint 5 main.py (the four function bodies).
+INSTRUCTOR REFERENCE - a correct Checkpoint 5 main.py (the two function bodies).
 Do not ship this to students.
 
 The sys.path shim lets this run from any working directory.
@@ -34,19 +34,20 @@ DIVE_MS = 400
 
 # --- BEGIN YOUR CODE (Checkpoint 5) -----------------------------------------
 
-def current_alert(sub):
-    hull = hull_status(sub.depth, sub.rated_depth)
-    oxy = oxygen_state(sub.oxygen)
-    return overall_alert(hull, oxy)
-
-
-def alert_color(alert):
+def draw_dashboard(screen, sub, alert):
+    engine.draw_hull_status(screen, hull_status(sub.depth, sub.rated_depth))
+    engine.draw_hud_text("O2: " + oxygen_state(sub.oxygen), (engine.WIDTH // 2, 46),
+                         size=15, anchor="midtop", color=(150, 190, 210))
     if alert == "DANGER":
-        return (230, 90, 80)
+        color = (230, 90, 80)
     elif alert == "WARNING":
-        return (230, 190, 90)
+        color = (230, 190, 90)
     else:
-        return (90, 200, 150)
+        color = (90, 200, 150)
+    engine.draw_hud_text(f"STATUS: {alert}", (engine.WIDTH // 2, 66), size=14,
+                         anchor="midtop", color=color)
+    engine.draw_hud_text("DOWN dive   UP rise   L light   ESC quit",
+                         (16, engine.HEIGHT - 26), size=13, color=(120, 140, 155))
 
 
 def handle_controls(sub):
@@ -57,16 +58,6 @@ def handle_controls(sub):
     if engine.key_pressed("L"):
         sub.light_on = not sub.light_on
 
-
-def draw_dashboard(screen, sub, alert):
-    engine.draw_hull_status(screen, hull_status(sub.depth, sub.rated_depth))
-    engine.draw_hud_text("O2: " + oxygen_state(sub.oxygen), (engine.WIDTH // 2, 46),
-                         size=15, anchor="midtop", color=(150, 190, 210))
-    engine.draw_hud_text(f"STATUS: {alert}", (engine.WIDTH // 2, 66), size=14,
-                         anchor="midtop", color=alert_color(alert))
-    engine.draw_hud_text("DOWN dive   UP rise   L light   ESC quit",
-                         (16, engine.HEIGHT - 26), size=13, color=(120, 140, 155))
-
 # --- END YOUR CODE -----------------------------------------------------------
 
 
@@ -74,7 +65,10 @@ def frame(sub, screen):
     draw_sonar_rings(screen, sub)
     draw_depth_ticks(screen, sub)
 
-    alert = current_alert(sub)
+    hull = hull_status(sub.depth, sub.rated_depth)
+    oxy = oxygen_state(sub.oxygen)
+    alert = overall_alert(hull, oxy)
+
     draw_dashboard(screen, sub, alert)
     handle_controls(sub)
 

@@ -1,116 +1,85 @@
 # Checkpoint 5 - Breaking frame() Apart
 
 **Module 5: Functions**
-**Concepts:** defining and calling functions, value-returning vs. void functions, parameters, calling a function from inside another function
+**Concepts:** defining and calling functions, void functions, parameters, calling a function from inside another function
 
 ---
 
 ## The story so far
 
-`frame()` has been doing a lot of work. By Checkpoint 4 it was computing the
-hull/oxygen/alert status, drawing four separate HUD lines, and handling three
-keys - all inline, all in one function. That's exactly the kind of tangle
-Module 5 exists to fix: pull related work out into its own named function, so
-`frame()` just calls a handful of clearly-named pieces instead of running
-thirty lines of mixed logic.
+`frame()` has really only ever done two jobs: draw the dashboard, and read
+the keyboard. Until now both jobs sat inline, mixed into one function. This
+week you pull each job out into its own function. Nothing you write changes
+what the game looks like when it runs - if you do it right, it should look
+and play exactly like Checkpoint 4 did, just organized better.
 
-This week you're not adding a new instrument - you're reorganizing code you
-already understand into four functions, two of which *return a value* and
-two of which don't return anything at all (they just do something). Nothing
-you write this week changes what the game looks like when it runs; if you do
-it right, it should look and play exactly like Checkpoint 4 did.
+This should be quick. You're not writing new logic - nearly every line you
+need is already sitting almost word-for-word inside your own Checkpoint 4
+`main.py`'s `frame()`. Open it side by side with this one.
 
 ---
 
 ## What to do
 
-Open `main.py`. Write the FOUR functions between `BEGIN YOUR CODE
-(Checkpoint 5)` and `END YOUR CODE`. This time you're not just filling in a
-body under a `def` line someone else planned out - you're deciding what each
-function does and calling your own other functions from inside it, the same
-way `frame()` calls them.
+Open `main.py`. Write TWO functions between `BEGIN YOUR CODE (Checkpoint 5)`
+and `END YOUR CODE`. Unlike every checkpoint before this, there's no `def`
+line waiting for you - you're deciding the name and parameters yourself and
+writing the whole thing.
 
 > Below your code: `frame()` is provided, now much shorter, then a
 > **Checkpoint 4 (carried over)** section with reference versions of last
 > week's four functions, then **Checkpoint 3 (carried over)** with reference
-> versions of all five of that week's functions - your new functions this
+> versions of all five of that week's functions - your two functions this
 > week call several of those directly - then **Checkpoint 2 (carried over)**
 > with the pre-dive intake. If you did those checkpoints, paste your own
 > versions in over the references.
 
-### 1. `current_alert(sub)` - value-returning
+### 1. `draw_dashboard(screen, sub, alert)` - void
 
-Combines the hull and oxygen readouts into one overall alert level, the same
-three lines `frame()` used to run by itself. Call your Checkpoint 3
-functions - `hull_status`, then `oxygen_state`, then `overall_alert` - and
-return whatever the last one gives you. Nothing is drawn here; this function
-only computes and hands back a string.
+Everything Checkpoint 4's `frame()` did with `draw_hull_status` /
+`draw_hud_text`, unchanged - the hull line, the O2 line, the STATUS line
+(including the `if`/`elif`/`else` that picks its color), and the
+controls-hint line at the bottom. `frame()` hands you `alert` already
+worked out, same as before. Copy those lines in, decide what the function
+needs as parameters to run them, and write the `def` line.
 
-### 2. `alert_color(alert)` - value-returning
+### 2. `handle_controls(sub)` - void
 
-| `alert` | Returns |
-|---|---|
-| `"DANGER"` | `(230, 90, 80)` |
-| `"WARNING"` | `(230, 190, 90)` |
-| anything else | `(90, 200, 150)` |
+Everything Checkpoint 4's `frame()` did with `DOWN` / `UP` / `L`. Same
+three `if` statements, same `can_descend(...)` gate on `DOWN` - copy them
+in as they were.
 
-A function's return value doesn't have to be a number or a string - a color
-tuple works just as well.
-
-### 3. `handle_controls(sub)` - void
-
-Everything `frame()` used to do with `DOWN` / `UP` / `L`:
-
-| Condition | Effect |
-|---|---|
-| `DOWN` held **and** `can_descend(sub.ballast, sub.power, sub.hull)` | `sub.descending = True` |
-| `UP` held | `sub.ascending = True` |
-| `L` just pressed (not held) | flip `sub.light_on` |
-
-This one changes `sub` directly and returns nothing - that's what makes it a
-void function instead of a value-returning one.
-
-### 4. `draw_dashboard(screen, sub, alert)` - void
-
-Everything `frame()` used to do with `draw_hull_status` / `draw_hud_text`.
-Takes `alert` as a parameter rather than recomputing it, since `frame()`
-already has it from `current_alert()`.
-
-| Line | Position | Size | Color |
-|---|---|---|---|
-| hull status (`engine.draw_hull_status`) | - | - | (handled internally) |
-| `"O2: " + <oxygen state>` | `(engine.WIDTH // 2, 46)`, `anchor="midtop"` | `15` | `(150, 190, 210)` |
-| `f"STATUS: {alert}"` | `(engine.WIDTH // 2, 66)`, `anchor="midtop"` | `14` | the matching alert color |
-| `"DOWN dive   UP rise   L light   ESC quit"` | `(16, engine.HEIGHT - 26)` | `13` | `(120, 140, 155)` |
-
-You'll need `hull_status(sub.depth, sub.rated_depth)` for the hull line and
-`oxygen_state(sub.oxygen)` for the O2 line - both from Checkpoint 3. For the
-STATUS line's color, you already wrote a function for exactly this.
+Both functions change things (drawing to the screen, or changing `sub`) and
+hand nothing back - that's what makes them void instead of value-returning.
+Inside each one, though, you're still calling functions that *do* return a
+value - `hull_status`, `oxygen_state`, and `can_descend`, all from
+Checkpoint 3. A void function can absolutely use another function's return
+value; it just doesn't pass anything back to *its own* caller.
 
 ---
 
 ## Try it
 
-Run `python main.py`. Everything should behave exactly like Checkpoint 4:
-the countdown, the depth gauge, the sonar sweep, the HULL/O2/STATUS
-readouts, the controls. If something looks different, that's a sign a
-function isn't doing quite what `frame()` used to do inline - compare
-against what Checkpoint 4's `frame()` did line by line.
+Because nothing is pre-written this week, running `python main.py` before
+either function exists will crash with a `NameError` - that's expected, not
+a bug. Get both written, then run it: everything should behave exactly like
+Checkpoint 4 - the countdown, the depth gauge, the sonar sweep, the
+HULL/O2/STATUS readouts, the controls. If something looks different, compare
+against what Checkpoint 4's `frame()` did line by line - you likely dropped
+or changed something in the copy.
 
 ---
 
 ## Done when
 
-`python check.py` prints **21 / 21** (100 points). It checks:
+`python check.py` prints **13 / 13** (100 points). It checks:
 
-- `current_alert()` returns the right level across several hull/oxygen
-  combinations, including that `"DANGER"` wins when both are bad
-- `alert_color()` returns the right tuple for each level
 - `handle_controls()` sets `sub.descending` / `sub.ascending` / `sub.light_on`
   correctly for different key combinations, including that `DOWN` is
   correctly blocked when `can_descend` is `False`
 - `draw_dashboard()` draws exactly the right three lines of text plus the
-  hull status, with the right position, size, and color on each
+  hull status, with the right position, size, and color on each - checked
+  across all three alert levels, so the color logic has to be complete
 
 Submit your `main.py` to Canvas. (Run `check.py` first to see your score -
 the grader runs the same check on the file you turn in.)
@@ -119,20 +88,21 @@ the grader runs the same check on the file you turn in.)
 
 ## Hints
 
-- `current_alert` and `alert_color` are both short - two or three lines each.
-  If either is getting long, you're probably recomputing something you don't
-  need to.
+- Go copy the lines from your own Checkpoint 4 `frame()` first, then figure
+  out the `def` line. Don't try to write either function from memory.
+- A function's parameters are just "whatever the lines inside it need from
+  outside." If a line uses `screen`, `sub`, or `alert`, that's a parameter.
 - `handle_controls` doesn't need `elif` - each key is its own independent
-  `if`, exactly like Checkpoint 4's `frame()` had them.
-- `draw_dashboard` calls four things and returns nothing. If `check.py` says
-  it drew the wrong number of lines, count your `draw_hud_text` calls.
-- A void function can still call other functions and use their return
-  values - it just doesn't hand anything back to *its own* caller.
+  `if`, exactly like before.
+- If `check.py` says `draw_dashboard` drew the wrong number of lines, count
+  your `draw_hud_text` calls against the four things it's supposed to draw.
 
 ## If you're stuck / joining late
 
 You don't need your Checkpoint 2, 3, or 4 files - the carried-over sections
 at the bottom of `main.py` already have working versions of all three. Do
-the `SETUP.md` setup if you haven't, then fill in the four function bodies
-here. If you *did* do the earlier checkpoints, swap your own code into those
-sections so the game stays fully yours.
+the `SETUP.md` setup if you haven't, then write the two functions here,
+copying from the reference `frame()`-style logic in those carried-over
+sections the same way you would from your own Checkpoint 4 file. If you
+*did* do the earlier checkpoints, swap your own code into those sections so
+the game stays fully yours.

@@ -1,8 +1,8 @@
 """
 Checkpoint 5 auto-check.   Run:  python check.py
 
-Imports the four functions from main.py (current_alert, alert_color,
-handle_controls, draw_dashboard) and exercises them directly.
+Imports the two functions from main.py (draw_dashboard, handle_controls)
+and exercises them directly.
 No window opens. Paste the final score into Canvas.
 """
 
@@ -11,7 +11,7 @@ import sys
 
 os.environ["LUMEN_HEADLESS"] = "1"
 
-TOTAL_CHECKS = 21
+TOTAL_CHECKS = 13
 
 results = []
 
@@ -39,14 +39,6 @@ def _oxy(oxygen_pct):
     return "CRITICAL"
 
 
-def _combined(hull_label, oxygen_label):
-    if hull_label == "BREACH" or oxygen_label == "CRITICAL":
-        return "DANGER"
-    elif hull_label == "CAUTION" or oxygen_label == "LOW":
-        return "WARNING"
-    return "SAFE"
-
-
 _EXPECTED_ALERT_COLOR = {"DANGER": (230, 90, 80), "WARNING": (230, 190, 90), "SAFE": (90, 200, 150)}
 
 
@@ -57,7 +49,7 @@ def main():
         print(f"  [FAIL] could not import main.py: {exc!r}")
         return _report(0, TOTAL_CHECKS)
 
-    needed = ("current_alert", "alert_color", "handle_controls", "draw_dashboard")
+    needed = ("draw_dashboard", "handle_controls")
     for fn in needed:
         if not hasattr(student, fn):
             print(f"  [FAIL] main.py has no function called {fn}()")
@@ -74,32 +66,6 @@ def main():
         sub.power = power
         sub.hull = hull
         return sub
-
-    # --- current_alert -----------------------------------------------------
-    cases = [
-        ("SAFE (hull OK, oxygen GOOD)", 500, 1000, 80, "SAFE"),
-        ("WARNING via hull CAUTION", 1000, 1000, 80, "WARNING"),
-        ("WARNING via oxygen LOW", 500, 1000, 30, "WARNING"),
-        ("DANGER via hull BREACH", 1500, 1000, 80, "DANGER"),
-        ("DANGER via oxygen CRITICAL", 500, 1000, 10, "DANGER"),
-        ("DANGER takes priority (hull CAUTION + oxygen CRITICAL)", 1000, 1000, 10, "DANGER"),
-    ]
-    for label, depth, rated, oxygen, expected in cases:
-        try:
-            sub = make_sub(depth=depth, oxygen=oxygen, rated=rated)
-            got = student.current_alert(sub)
-            check(f"current_alert: {label} -> {expected!r}", got == expected, f"got {got!r}")
-        except Exception as exc:
-            check(f"current_alert: {label}", False, repr(exc))
-
-    # --- alert_color ---------------------------------------------------------
-    for alert, expected in [("DANGER", (230, 90, 80)), ("WARNING", (230, 190, 90)),
-                             ("SAFE", (90, 200, 150)), ("anything-else", (90, 200, 150))]:
-        try:
-            got = student.alert_color(alert)
-            check(f"alert_color({alert!r}) -> {expected}", tuple(got) == expected, f"got {got!r}")
-        except Exception as exc:
-            check(f"alert_color({alert!r})", False, repr(exc))
 
     # --- handle_controls -------------------------------------------------------
     real_down, real_pressed = engine.key_down, engine.key_pressed
@@ -213,6 +179,26 @@ def main():
 
     check("draw_dashboard draws exactly 3 lines of HUD text (no extras, none missing)",
           len(text_calls) == 3, f"got {len(text_calls)}: {[c['text'] for c in text_calls]}")
+
+    for alert_case, depth, rated, oxygen in [("SAFE", 500, 1000, 80), ("DANGER", 1500, 1000, 80)]:
+        calls = []
+        engine.draw_hud_text = lambda text, pos, size=16, color=(198, 216, 232), anchor="topleft": \
+            calls.append({"text": text, "color": tuple(color)})
+        engine.draw_hull_status = lambda screen, status: None
+        try:
+            sub = make_sub(depth=depth, oxygen=oxygen, rated=rated)
+            student.draw_dashboard(None, sub, alert_case)
+        except Exception as exc:
+            check(f"draw_dashboard STATUS line color for alert={alert_case!r}", False, repr(exc))
+            continue
+        finally:
+            engine.draw_hud_text = real_hud_text
+            engine.draw_hull_status = real_hull_status_draw
+
+        status_line = next((c for c in calls if c["text"].startswith("STATUS: ")), None)
+        check(f"draw_dashboard STATUS line color for alert={alert_case!r}",
+              status_line == {"text": f"STATUS: {alert_case}", "color": _EXPECTED_ALERT_COLOR[alert_case]},
+              f"got {status_line}")
 
     _report(sum(results), len(results))
 
