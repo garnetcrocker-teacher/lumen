@@ -286,16 +286,12 @@ def world_x_to_screen(sub, world_x):
 
 def distance_to_base_edge(sub):
     """How far outside the recharge base's edge the sub currently is, in
-    screen pixels - matching exactly what's drawn on screen, not raw
-    world meters. sub.x and sub.depth aren't on the same scale: depth
-    is stretched by PIXELS_PER_METER when drawn (world_y_to_screen) but
-    sideways position isn't (world_x_to_screen), so this scales the
-    depth difference the same way before measuring, or "in range" would
-    end up covering a much taller area than it does wide. 0 or negative
-    once inside; you don't need to land on an exact point, just get
-    within the circle."""
+    real meters - the same units as DEPTH, POSITION, and every other
+    distance readout in the game. Straight-line distance to (base_x,
+    base_depth), minus base_radius. 0 or negative once inside; you don't
+    need to land on an exact point, just get within the circle."""
     dx = sub.x - sub.base_x
-    dy = (sub.depth - sub.base_depth) * PIXELS_PER_METER
+    dy = sub.depth - sub.base_depth
     return (dx * dx + dy * dy) ** 0.5 - sub.base_radius
 
 
@@ -392,20 +388,26 @@ def _bar(screen, label, value, x, y, good=(80, 200, 140), bad=(210, 90, 80)):
 
 
 def _draw_recharge_base(screen, sub):
-    """The recharge base, drawn as a simple glowing marker plus a ring at
-    its actual recharge radius - nothing fancy yet, this gets a real look
-    once bases become their own class. The ring is drawn at exactly the
-    boundary distance_to_base_edge checks against, so what you see matches
-    what you get. Drawn with its own light (after _draw_darkness, same as
-    _draw_target_line), since the whole point is being able to spot it
-    from a distance."""
+    """The recharge base, drawn as a simple glowing marker plus an outline
+    at its actual recharge radius - nothing fancy yet, this gets a real
+    look once bases become their own class. distance_to_base_edge checks a
+    true circle in real meters, but the screen doesn't map meters the same
+    way on both axes - world_y_to_screen stretches depth by
+    PIXELS_PER_METER, world_x_to_screen doesn't touch x - so drawn
+    faithfully that circle is an ellipse on screen, taller than it is
+    wide by exactly that factor. That's the truth of it, not a bug: it's
+    the same reason depth tick marks are spaced further apart on screen
+    than the same distance sideways would be. Drawn with its own light
+    (after _draw_darkness, same as _draw_target_line), since the whole
+    point is being able to spot it from a distance."""
     bx = world_x_to_screen(sub, sub.base_x)
     by = world_y_to_screen(sub, sub.base_depth)
-    r = int(sub.base_radius)
-    if bx < -r - 100 or bx > WIDTH + r + 100 or by < -r - 100 or by > HEIGHT + r + 100:
+    rx = int(sub.base_radius)
+    ry = int(sub.base_radius * PIXELS_PER_METER)
+    if bx < -rx - 100 or bx > WIDTH + rx + 100 or by < -ry - 100 or by > HEIGHT + ry + 100:
         return
     draw_glow(screen, (bx, by), 60, (120, 220, 255))
-    pygame.draw.circle(screen, (120, 220, 255), (bx, by), r, 1)   # the true recharge boundary
+    pygame.draw.ellipse(screen, (120, 220, 255), (bx - rx, by - ry, rx * 2, ry * 2), 1)
     pygame.draw.circle(screen, (170, 235, 250), (bx, by), 9)
     pygame.draw.circle(screen, (120, 220, 255), (bx, by), 9, 2)
 
