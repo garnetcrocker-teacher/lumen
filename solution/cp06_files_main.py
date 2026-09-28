@@ -36,6 +36,7 @@ DIVE_MS = 400
 
 DIVE_LOG_PATH = "dive_log.csv"
 DIVE_LOG_HEADER = "pilot,depth,outcome"
+SUMMARY_PATH = "last_dive.txt"
 
 # --- BEGIN YOUR CODE (Checkpoint 6) -----------------------------------------
 
@@ -48,20 +49,38 @@ def save_dive_log(pilot, depth, alive, path=DIVE_LOG_PATH):
         f.write(f"{pilot},{depth},{outcome}\n")
 
 
-def load_best_depth(path=DIVE_LOG_PATH):
+def load_dive_stats(path=DIVE_LOG_PATH):
     try:
         with open(path, "r") as f:
             lines = f.readlines()
     except FileNotFoundError:
-        return 0.0
+        return 0, 0.0, 0.0, 0.0
 
-    best = 0.0
+    count = 0
+    total = 0.0
+    minimum = None
+    maximum = None
     for line in lines[1:]:
         fields = line.strip().split(",")
         depth = float(fields[1])
-        if depth > best:
-            best = depth
-    return best
+        count += 1
+        total += depth
+        if minimum is None or depth < minimum:
+            minimum = depth
+        if maximum is None or depth > maximum:
+            maximum = depth
+
+    if count == 0:
+        return 0, 0.0, 0.0, 0.0
+    return count, total / count, minimum, maximum
+
+
+def save_last_summary(pilot, depth, alive, path=SUMMARY_PATH):
+    outcome = "SURVIVED" if alive else "LOST"
+    with open(path, "w") as f:
+        f.write(f"Pilot: {pilot}\n")
+        f.write(f"Depth: {depth} m\n")
+        f.write(f"Outcome: {outcome}\n")
 
 # --- END YOUR CODE -----------------------------------------------------------
 
@@ -219,13 +238,14 @@ def overall_alert(hull_label, oxygen_label):
 
 # ============ Checkpoint 2 (carried over) - reference version ==============
 if __name__ == "__main__":
-    best = load_best_depth()
+    count, average, minimum, maximum = load_dive_stats()
 
     print("=" * 40)
     print("        LUMEN  -  PRE-DIVE INTAKE")
     print("=" * 40)
-    if best > 0:
-        print(f"Personal best depth: {best:.1f} m - beat it if you can.")
+    if count > 0:
+        print(f"{count} dive(s) logged - best {maximum:.1f} m, "
+              f"average {average:.1f} m, shallowest {minimum:.1f} m.")
     else:
         print("No dives logged yet - this will be the first.")
     print()
@@ -251,3 +271,4 @@ if __name__ == "__main__":
     countdown_to_dive(DIVE_COUNTDOWN)
     sub = engine.run(frame)
     save_dive_log(pilot, sub.depth, sub.alive)
+    save_last_summary(pilot, sub.depth, sub.alive)

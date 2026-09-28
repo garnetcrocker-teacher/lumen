@@ -5,21 +5,28 @@ Module 6: Files & Exceptions
     Run the game:      python main.py      (press ESC or close the window to quit)
     Check your work:    python check.py
 
-Your job this week is the TWO functions in the YOUR CODE section below:
-save_dive_log, load_best_depth. The def lines are written for you again
-this week - the exercise is what goes inside them, not the signature.
+Your job this week is the THREE functions in the YOUR CODE section below:
+save_dive_log, load_dive_stats, save_last_summary. The def lines and
+docstrings are written for you - fill in each body.
 
-Every dive, however it ends, now gets written to a small log file,
-dive_log.csv, that survives between runs of the game. save_dive_log
-appends one line per dive: who piloted it, how deep they got, and
-whether they survived. load_best_depth reads that file back and reports
-the deepest anyone has ever gotten - handling the very first run, when
-the file doesn't exist yet, without crashing.
+Every dive, however it ends, now gets written to two files that survive
+between runs of the game:
 
-Both functions are called for you already, outside the YOUR CODE
-section: load_best_depth() right at the top of the pre-dive intake (so
-you see your record before you dive), and save_dive_log() right after
-engine.run() returns, using the sub it hands back.
+  - dive_log.csv grows by one line every dive - a running history. This
+    is the same file both save_dive_log and load_dive_stats work with.
+  - last_dive.txt holds only the most recent dive - each call completely
+    replaces whatever was there before, instead of adding to it. That's
+    the difference between opening a file in append mode and opening it
+    in write mode, and this checkpoint has one function using each.
+
+Both files start out not existing at all - the first time anyone ever
+runs the game, reading either one has to survive that without crashing.
+
+Already wired up for you, outside the YOUR CODE section: load_dive_stats()
+is called at the top of the pre-dive intake (so you see your history
+before you dive), and save_dive_log()/save_last_summary() are both called
+right after engine.run() returns, using the sub it hands back. You don't
+need to add either call yourself - just make the three functions work.
 
 Checkpoints 2, 3, 4, and 5 are carried into the BOTTOM of this file:
   - Checkpoint 5's four functions (format_distance, distance_to_base,
@@ -61,41 +68,73 @@ URGENT_FREQ = 660
 DIVE_FREQ = 220
 DIVE_MS = 400
 
-DIVE_LOG_PATH = "dive_log.csv"
+DIVE_LOG_PATH = "dive_log.csv"          # grows by one line every dive
 DIVE_LOG_HEADER = "pilot,depth,outcome"
+SUMMARY_PATH = "last_dive.txt"          # replaced completely every dive
 
 # --- BEGIN YOUR CODE (Checkpoint 6) -----------------------------------------
-#
-# def save_dive_log(pilot, depth, alive, path=DIVE_LOG_PATH):
-#     Void. Appends one line to the CSV file at `path`, recording this
-#     dive: the pilot's name, the final depth reached, and the outcome -
-#     "SURVIVED" if alive is True, "LOST" otherwise. Join those three
-#     pieces into one comma-separated line, same shape as DIVE_LOG_HEADER
-#     above.
-#
-#     If the file doesn't exist yet, this is the first dive ever logged -
-#     write DIVE_LOG_HEADER as a line first, before this dive's line.
-#     os.path.exists(path) tells you whether the file is already there;
-#     check that BEFORE you open it.
-#
-#     Open the file in append mode so every call adds a line without
-#     erasing what's already in it - a with block is the cleanest way to
-#     make sure the file gets closed once you're done writing to it.
-#
-# def load_best_depth(path=DIVE_LOG_PATH):
-#     Returns a float: the deepest depth any dive in the log has ever
-#     reached, or 0.0 if the file doesn't exist yet (no dives logged at
-#     all). Skip the header line; every line after that is
-#     "pilot,depth,outcome" - split each one apart, pull out the depth
-#     field, convert it to a float, and keep the largest one you've seen
-#     as you go through the whole file.
-#
-#     The very first time this ever runs, the file won't exist. Wrap
-#     whatever opens the file in a try/except FileNotFoundError, and
-#     return 0.0 from the except block - a fresh install with nothing
-#     logged yet isn't a bug.
-#
-# save_dive_log is void; load_best_depth returns a float.
+
+def save_dive_log(pilot, depth, alive, path=DIVE_LOG_PATH):
+    """Append one line to the CSV dive log at `path`, recording this dive:
+    the pilot's name, the final depth reached, and the outcome -
+    "SURVIVED" if `alive` is True, "LOST" otherwise. Join those three
+    pieces into one comma-separated line, the same shape as
+    DIVE_LOG_HEADER above.
+
+    If the file doesn't exist yet, this is the first dive ever logged -
+    write DIVE_LOG_HEADER as its own line first, before this dive's line.
+    os.path.exists(path) tells you whether the file is already there -
+    check that BEFORE you open it, since opening it in append mode is
+    what would create it.
+
+    Open the file in append mode ("a") so every call adds a line without
+    erasing what's already there. A with block is the cleanest way to
+    make sure the file gets closed once you're done writing to it.
+
+    Void - nothing to return.
+    """
+    pass
+
+
+def load_dive_stats(path=DIVE_LOG_PATH):
+    """Read the dive log at `path` and return FOUR numbers describing
+    every dive ever logged: how many there have been, their average
+    depth, the shallowest depth, and the deepest depth - in that order,
+    as (count, average, minimum, maximum).
+
+    Skip the header line; every line after that is "pilot,depth,outcome".
+    Split each one apart, pull out the depth field, and convert it to a
+    float. As you go through the rest of the file, keep a running count,
+    a running total (so you can compute the average once you've seen
+    every line), and a running minimum and maximum.
+
+    The very first time this ever runs, the file won't exist. Wrap
+    whatever opens the file in a try/except FileNotFoundError, and
+    return (0, 0.0, 0.0, 0.0) from the except block - no dives logged
+    yet isn't a crash, it's the starting state.
+
+    Returns a tuple of four numbers: (count, average, minimum, maximum).
+    """
+    return 0, 0.0, 0.0, 0.0
+
+
+def save_last_summary(pilot, depth, alive, path=SUMMARY_PATH):
+    """Write a short, human-readable report of just this one dive to
+    `path` - a snapshot of the most recent dive only, not a running log.
+    Exactly three lines:
+        Pilot: <pilot>
+        Depth: <depth> m
+        Outcome: <SURVIVED or LOST, depending on alive>
+
+    Open the file in write mode ("w") this time, not append mode. Write
+    mode replaces whatever was already in the file - which is exactly
+    what you want here: each call should completely replace the last
+    dive's summary, not add to it the way dive_log.csv does.
+
+    Void - nothing to return.
+    """
+    pass
+
 # --- END YOUR CODE -----------------------------------------------------------
 
 
@@ -272,13 +311,14 @@ def overall_alert(hull_label, oxygen_label):
 #  game runs - replace it with your own if you have it.
 # =============================================================================
 if __name__ == "__main__":
-    best = load_best_depth()
+    count, average, minimum, maximum = load_dive_stats()
 
     print("=" * 40)
     print("        LUMEN  -  PRE-DIVE INTAKE")
     print("=" * 40)
-    if best > 0:
-        print(f"Personal best depth: {best:.1f} m - beat it if you can.")
+    if count > 0:
+        print(f"{count} dive(s) logged - best {maximum:.1f} m, "
+              f"average {average:.1f} m, shallowest {minimum:.1f} m.")
     else:
         print("No dives logged yet - this will be the first.")
     print()
@@ -304,3 +344,4 @@ if __name__ == "__main__":
     countdown_to_dive(DIVE_COUNTDOWN)
     sub = engine.run(frame)      # launch the dive with the plan you just entered
     save_dive_log(pilot, sub.depth, sub.alive)
+    save_last_summary(pilot, sub.depth, sub.alive)

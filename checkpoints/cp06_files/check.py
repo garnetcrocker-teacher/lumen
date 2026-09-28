@@ -1,9 +1,10 @@
 """
 Checkpoint 6 auto-check.   Run:  python check.py
 
-Imports the two functions from main.py (save_dive_log, load_best_depth) and
-exercises them directly against a dedicated test file (never your real
-dive_log.csv). No window opens. Paste the final score into Canvas.
+Imports the three functions from main.py (save_dive_log, load_dive_stats,
+save_last_summary) and exercises them directly against dedicated test files
+(never your real dive_log.csv or last_dive.txt). No window opens. Paste the
+final score into Canvas.
 """
 
 import os
@@ -11,9 +12,10 @@ import sys
 
 os.environ["LUMEN_HEADLESS"] = "1"
 
-TOTAL_CHECKS = 10
+TOTAL_CHECKS = 15
 
 TEST_LOG = "test_dive_log.csv"
+TEST_SUMMARY = "test_last_dive.txt"
 
 results = []
 
@@ -25,12 +27,13 @@ def check(label, passed, detail=""):
 
 
 def _reset():
-    if os.path.exists(TEST_LOG):
-        os.remove(TEST_LOG)
+    for path in (TEST_LOG, TEST_SUMMARY):
+        if os.path.exists(path):
+            os.remove(path)
 
 
-def _lines():
-    with open(TEST_LOG, "r") as f:
+def _lines(path):
+    with open(path, "r") as f:
         return [line.strip() for line in f.readlines()]
 
 
@@ -41,28 +44,21 @@ def main():
         print(f"  [FAIL] could not import main.py: {exc!r}")
         return _report(0, TOTAL_CHECKS)
 
-    needed = ("save_dive_log", "load_best_depth")
+    needed = ("save_dive_log", "load_dive_stats", "save_last_summary")
     for fn in needed:
         if not hasattr(student, fn):
             print(f"  [FAIL] main.py has no function called {fn}()")
             return _report(0, TOTAL_CHECKS)
 
-    # --- load_best_depth on a missing file --------------------------------------
+    # --- load_dive_stats on a missing file --------------------------------------
     _reset()
     try:
-        result = student.load_best_depth(TEST_LOG)
-        check("load_best_depth() on a missing file returns 0.0 (no crash)",
-              result == 0.0, f"got {result!r}")
+        result = student.load_dive_stats(TEST_LOG)
+        check("load_dive_stats() on a missing file returns (0, 0.0, 0.0, 0.0)",
+              tuple(result) == (0, 0.0, 0.0, 0.0), f"got {result!r}")
     except Exception as exc:
-        check("load_best_depth() on a missing file returns 0.0 (no crash)",
+        check("load_dive_stats() on a missing file returns (0, 0.0, 0.0, 0.0)",
               False, repr(exc))
-
-    try:
-        result = student.load_best_depth(TEST_LOG)
-        check("load_best_depth() on a missing file returns a float, not an int/str",
-              isinstance(result, float), f"got {type(result).__name__} {result!r}")
-    except Exception as exc:
-        check("load_best_depth() on a missing file returns a float", False, repr(exc))
 
     # --- save_dive_log: first call creates the file with a header --------------
     _reset()
@@ -74,21 +70,21 @@ def main():
         check("save_dive_log() creates the log file if it doesn't exist", False, repr(exc))
 
     try:
-        lines = _lines()
+        lines = _lines(TEST_LOG)
         check("save_dive_log() writes the header line first",
               lines[0] == "pilot,depth,outcome", f"got {lines[0]!r}" if lines else "file is empty")
     except Exception as exc:
         check("save_dive_log() writes the header line first", False, repr(exc))
 
     try:
-        lines = _lines()
+        lines = _lines(TEST_LOG)
         check("after one save_dive_log() call, the file has exactly 2 lines (header + 1 row)",
               len(lines) == 2, f"got {len(lines)} lines: {lines}")
     except Exception as exc:
         check("after one save_dive_log() call, the file has exactly 2 lines", False, repr(exc))
 
     try:
-        lines = _lines()
+        lines = _lines(TEST_LOG)
         row = lines[1].split(",")
         check("the saved row records the pilot's name and \"SURVIVED\" when alive is True",
               row[0] == "Nova" and row[2] == "SURVIVED", f"got {lines[1]!r}")
@@ -98,7 +94,7 @@ def main():
     # --- save_dive_log: second call appends, doesn't duplicate the header ------
     try:
         student.save_dive_log("Rook", 90.0, False, TEST_LOG)
-        lines = _lines()
+        lines = _lines(TEST_LOG)
         check("a second save_dive_log() call appends a row without rewriting the header "
               "(3 lines total: header + 2 rows)",
               len(lines) == 3 and lines.count("pilot,depth,outcome") == 1,
@@ -108,32 +104,69 @@ def main():
               False, repr(exc))
 
     try:
-        lines = _lines()
+        lines = _lines(TEST_LOG)
         row = lines[2].split(",")
         check("the second row records \"LOST\" when alive is False",
               row[2] == "LOST", f"got {lines[2]!r}")
     except Exception as exc:
         check("the second row records \"LOST\" when alive is False", False, repr(exc))
 
-    # --- load_best_depth: the maximum, not the first or last logged dive -------
+    # --- load_dive_stats: count/average/min/max over several dives -------------
     _reset()
     try:
         student.save_dive_log("A", 100.0, True, TEST_LOG)
         student.save_dive_log("B", 500.0, False, TEST_LOG)
         student.save_dive_log("C", 250.0, True, TEST_LOG)
-        result = student.load_best_depth(TEST_LOG)
-        check("load_best_depth() returns the deepest of several logged dives (500.0), "
-              "not just the first or last",
-              result == 500.0, f"got {result!r}")
+        count, average, minimum, maximum = student.load_dive_stats(TEST_LOG)
+        check("load_dive_stats() counts all three logged dives",
+              count == 3, f"got count={count!r}")
+        check("load_dive_stats() computes the correct average depth (283.33...)",
+              abs(average - (100.0 + 500.0 + 250.0) / 3) < 0.01, f"got average={average!r}")
+        check("load_dive_stats() finds the correct minimum depth (100.0)",
+              abs(minimum - 100.0) < 0.01, f"got minimum={minimum!r}")
+        check("load_dive_stats() finds the correct maximum depth (500.0), "
+              "not just the first or last row",
+              abs(maximum - 500.0) < 0.01, f"got maximum={maximum!r}")
     except Exception as exc:
-        check("load_best_depth() returns the deepest of several logged dives", False, repr(exc))
+        check("load_dive_stats() computes count/average/min/max correctly", False, repr(exc))
+
+    # --- save_last_summary: overwrites instead of appending --------------------
+    _reset()
+    try:
+        student.save_last_summary("Nova", 340.0, True, TEST_SUMMARY)
+    except Exception:
+        pass
 
     try:
-        result = student.load_best_depth(TEST_LOG)
-        check("load_best_depth() still returns a float once the file has real rows in it",
-              isinstance(result, float), f"got {type(result).__name__} {result!r}")
+        lines = _lines(TEST_SUMMARY)
+        check("save_last_summary() writes exactly 3 lines (Pilot/Depth/Outcome)",
+              len(lines) == 3, f"got {len(lines)} lines: {lines}")
     except Exception as exc:
-        check("load_best_depth() still returns a float once the file has real rows",
+        check("save_last_summary() writes exactly 3 lines (Pilot/Depth/Outcome)", False, repr(exc))
+
+    try:
+        lines = _lines(TEST_SUMMARY)
+        check("save_last_summary() records the pilot's name",
+              lines[0] == "Pilot: Nova", f"got {lines[0]!r}")
+    except Exception as exc:
+        check("save_last_summary() records the pilot's name", False, repr(exc))
+
+    try:
+        lines = _lines(TEST_SUMMARY)
+        check("save_last_summary() records \"SURVIVED\" when alive is True",
+              lines[2] == "Outcome: SURVIVED", f"got {lines[2]!r}")
+    except Exception as exc:
+        check("save_last_summary() records \"SURVIVED\" when alive is True", False, repr(exc))
+
+    try:
+        student.save_last_summary("Rook", 90.0, False, TEST_SUMMARY)
+        lines = _lines(TEST_SUMMARY)
+        check("a second save_last_summary() call replaces the file instead of appending "
+              "(still 3 lines, showing the new dive only)",
+              len(lines) == 3 and lines[0] == "Pilot: Rook" and lines[2] == "Outcome: LOST",
+              f"got {len(lines)} lines: {lines}")
+    except Exception as exc:
+        check("a second save_last_summary() call replaces the file instead of appending",
               False, repr(exc))
 
     _reset()
