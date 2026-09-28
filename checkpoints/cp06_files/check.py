@@ -2,8 +2,8 @@
 Checkpoint 6 auto-check.   Run:  python check.py
 
 Imports the three functions from main.py (save_dive_log, load_dive_stats,
-save_last_summary) and exercises them directly against dedicated test files
-(never your real dive_log.csv or last_dive.txt). No window opens. Paste the
+save_best_dive) and exercises them directly against dedicated test files
+(never your real dive_log.csv or best_dive.txt). No window opens. Paste the
 final score into Canvas.
 """
 
@@ -12,10 +12,10 @@ import sys
 
 os.environ["LUMEN_HEADLESS"] = "1"
 
-TOTAL_CHECKS = 15
+TOTAL_CHECKS = 17
 
 TEST_LOG = "test_dive_log.csv"
-TEST_SUMMARY = "test_last_dive.txt"
+TEST_BEST = "test_best_dive.txt"
 
 results = []
 
@@ -27,7 +27,7 @@ def check(label, passed, detail=""):
 
 
 def _reset():
-    for path in (TEST_LOG, TEST_SUMMARY):
+    for path in (TEST_LOG, TEST_BEST):
         if os.path.exists(path):
             os.remove(path)
 
@@ -44,7 +44,7 @@ def main():
         print(f"  [FAIL] could not import main.py: {exc!r}")
         return _report(0, TOTAL_CHECKS)
 
-    needed = ("save_dive_log", "load_dive_stats", "save_last_summary")
+    needed = ("save_dive_log", "load_dive_stats", "save_best_dive")
     for fn in needed:
         if not hasattr(student, fn):
             print(f"  [FAIL] main.py has no function called {fn}()")
@@ -130,44 +130,63 @@ def main():
     except Exception as exc:
         check("load_dive_stats() computes count/average/min/max correctly", False, repr(exc))
 
-    # --- save_last_summary: overwrites instead of appending --------------------
+    # --- save_best_dive: first survived dive becomes the record ----------------
     _reset()
     try:
-        student.save_last_summary("Nova", 340.0, True, TEST_SUMMARY)
-    except Exception:
-        pass
-
-    try:
-        lines = _lines(TEST_SUMMARY)
-        check("save_last_summary() writes exactly 3 lines (Pilot/Depth/Outcome)",
-              len(lines) == 3, f"got {len(lines)} lines: {lines}")
+        student.save_best_dive("Nova", 300.0, True, TEST_BEST)
+        check("save_best_dive() creates the record file on the first survived dive",
+              os.path.exists(TEST_BEST), "file was not created")
     except Exception as exc:
-        check("save_last_summary() writes exactly 3 lines (Pilot/Depth/Outcome)", False, repr(exc))
-
-    try:
-        lines = _lines(TEST_SUMMARY)
-        check("save_last_summary() records the pilot's name",
-              lines[0] == "Pilot: Nova", f"got {lines[0]!r}")
-    except Exception as exc:
-        check("save_last_summary() records the pilot's name", False, repr(exc))
-
-    try:
-        lines = _lines(TEST_SUMMARY)
-        check("save_last_summary() records \"SURVIVED\" when alive is True",
-              lines[2] == "Outcome: SURVIVED", f"got {lines[2]!r}")
-    except Exception as exc:
-        check("save_last_summary() records \"SURVIVED\" when alive is True", False, repr(exc))
-
-    try:
-        student.save_last_summary("Rook", 90.0, False, TEST_SUMMARY)
-        lines = _lines(TEST_SUMMARY)
-        check("a second save_last_summary() call replaces the file instead of appending "
-              "(still 3 lines, showing the new dive only)",
-              len(lines) == 3 and lines[0] == "Pilot: Rook" and lines[2] == "Outcome: LOST",
-              f"got {len(lines)} lines: {lines}")
-    except Exception as exc:
-        check("a second save_last_summary() call replaces the file instead of appending",
+        check("save_best_dive() creates the record file on the first survived dive",
               False, repr(exc))
+
+    try:
+        lines = _lines(TEST_BEST)
+        check("the record file holds exactly 2 lines (Pilot/Depth)",
+              len(lines) == 2, f"got {len(lines)} lines: {lines}")
+    except Exception as exc:
+        check("the record file holds exactly 2 lines (Pilot/Depth)", False, repr(exc))
+
+    try:
+        lines = _lines(TEST_BEST)
+        check("the record correctly names the pilot and depth",
+              lines[0] == "Pilot: Nova" and lines[1] == "Depth: 300.0 m",
+              f"got {lines!r}")
+    except Exception as exc:
+        check("the record correctly names the pilot and depth", False, repr(exc))
+
+    # --- save_best_dive: a shallower survived dive does NOT beat the record ----
+    try:
+        student.save_best_dive("Rook", 200.0, True, TEST_BEST)
+        lines = _lines(TEST_BEST)
+        check("a shallower survived dive does not overwrite the record "
+              "(still Nova at 300.0 m)",
+              lines[0] == "Pilot: Nova" and lines[1] == "Depth: 300.0 m",
+              f"got {lines!r}")
+    except Exception as exc:
+        check("a shallower survived dive does not overwrite the record", False, repr(exc))
+
+    # --- save_best_dive: a deeper dive that did NOT survive doesn't count ------
+    try:
+        student.save_best_dive("Ghost", 900.0, False, TEST_BEST)
+        lines = _lines(TEST_BEST)
+        check("a deeper dive that did not survive does not overwrite the record "
+              "(still Nova at 300.0 m)",
+              lines[0] == "Pilot: Nova" and lines[1] == "Depth: 300.0 m",
+              f"got {lines!r}")
+    except Exception as exc:
+        check("a deeper dive that did not survive does not overwrite the record",
+              False, repr(exc))
+
+    # --- save_best_dive: a deeper survived dive DOES beat the record -----------
+    try:
+        student.save_best_dive("Zed", 500.0, True, TEST_BEST)
+        lines = _lines(TEST_BEST)
+        check("a deeper survived dive overwrites the record with the new pilot and depth",
+              lines[0] == "Pilot: Zed" and lines[1] == "Depth: 500.0 m",
+              f"got {lines!r}")
+    except Exception as exc:
+        check("a deeper survived dive overwrites the record", False, repr(exc))
 
     _reset()
     _report(sum(results), len(results))

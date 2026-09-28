@@ -6,25 +6,26 @@ Module 6: Files & Exceptions
     Check your work:    python check.py
 
 Your job this week is the THREE functions in the YOUR CODE section below:
-save_dive_log, load_dive_stats, save_last_summary. The def lines and
+save_dive_log, load_dive_stats, save_best_dive. The def lines and
 docstrings are written for you - fill in each body.
 
-Every dive, however it ends, now gets written to two files that survive
-between runs of the game:
+Every dive, however it ends, touches two files that survive between runs
+of the game:
 
   - dive_log.csv grows by one line every dive - a running history. This
     is the same file both save_dive_log and load_dive_stats work with.
-  - last_dive.txt holds only the most recent dive - each call completely
-    replaces whatever was there before, instead of adding to it. That's
-    the difference between opening a file in append mode and opening it
-    in write mode, and this checkpoint has one function using each.
+  - best_dive.txt holds only the current record - the deepest dive ever
+    SURVIVED. Most dives leave it untouched; it only gets overwritten
+    when this dive is both alive and deeper than whatever's already in
+    it. That's a read-compare-then-maybe-write, on top of the plain
+    append/write contrast dive_log.csv already gives you.
 
 Both files start out not existing at all - the first time anyone ever
 runs the game, reading either one has to survive that without crashing.
 
 Already wired up for you, outside the YOUR CODE section: load_dive_stats()
 is called at the top of the pre-dive intake (so you see your history
-before you dive), and save_dive_log()/save_last_summary() are both called
+before you dive), and save_dive_log()/save_best_dive() are both called
 right after engine.run() returns, using the sub it hands back. You don't
 need to add either call yourself - just make the three functions work.
 
@@ -70,7 +71,7 @@ DIVE_MS = 400
 
 DIVE_LOG_PATH = "dive_log.csv"          # grows by one line every dive
 DIVE_LOG_HEADER = "pilot,depth,outcome"
-SUMMARY_PATH = "last_dive.txt"          # replaced completely every dive
+BEST_PATH = "best_dive.txt"             # overwritten only when the record is beaten
 
 # --- BEGIN YOUR CODE (Checkpoint 6) -----------------------------------------
 
@@ -118,18 +119,24 @@ def load_dive_stats(path=DIVE_LOG_PATH):
     return 0, 0.0, 0.0, 0.0
 
 
-def save_last_summary(pilot, depth, alive, path=SUMMARY_PATH):
-    """Write a short, human-readable report of just this one dive to
-    `path` - a snapshot of the most recent dive only, not a running log.
-    Exactly three lines:
+def save_best_dive(pilot, depth, alive, path=BEST_PATH):
+    """Track the deepest dive ever SURVIVED in a separate file from the
+    growing log. `path` should hold at most two lines at any time -
+    whichever dive currently holds the record:
         Pilot: <pilot>
         Depth: <depth> m
-        Outcome: <SURVIVED or LOST, depending on alive>
 
-    Open the file in write mode ("w") this time, not append mode. Write
-    mode replaces whatever was already in the file - which is exactly
-    what you want here: each call should completely replace the last
-    dive's summary, not add to it the way dive_log.csv does.
+    A dive can only set a new record if `alive` is True - a dive that
+    ended in a hull breach doesn't get to claim the title no matter how
+    deep it went.
+
+    Try to open and read `path` first, the same way load_dive_stats
+    handles a file that might not exist yet. Pull the existing record's
+    depth back out of it. Then: if the file didn't exist, or this dive
+    is alive AND deeper than that depth, this dive becomes the new
+    record - open the file in write mode ("w") and write the two lines
+    above for the new pilot and depth. Otherwise, leave the file exactly
+    as it was.
 
     Void - nothing to return.
     """
@@ -344,4 +351,4 @@ if __name__ == "__main__":
     countdown_to_dive(DIVE_COUNTDOWN)
     sub = engine.run(frame)      # launch the dive with the plan you just entered
     save_dive_log(pilot, sub.depth, sub.alive)
-    save_last_summary(pilot, sub.depth, sub.alive)
+    save_best_dive(pilot, sub.depth, sub.alive)

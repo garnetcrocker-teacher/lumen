@@ -36,7 +36,7 @@ DIVE_MS = 400
 
 DIVE_LOG_PATH = "dive_log.csv"
 DIVE_LOG_HEADER = "pilot,depth,outcome"
-SUMMARY_PATH = "last_dive.txt"
+BEST_PATH = "best_dive.txt"
 
 # --- BEGIN YOUR CODE (Checkpoint 6) -----------------------------------------
 
@@ -75,12 +75,21 @@ def load_dive_stats(path=DIVE_LOG_PATH):
     return count, total / count, minimum, maximum
 
 
-def save_last_summary(pilot, depth, alive, path=SUMMARY_PATH):
-    outcome = "SURVIVED" if alive else "LOST"
-    with open(path, "w") as f:
-        f.write(f"Pilot: {pilot}\n")
-        f.write(f"Depth: {depth} m\n")
-        f.write(f"Outcome: {outcome}\n")
+def save_best_dive(pilot, depth, alive, path=BEST_PATH):
+    if not alive:
+        return
+
+    try:
+        with open(path, "r") as f:
+            lines = f.readlines()
+        current_best = float(lines[1].split()[1])
+    except FileNotFoundError:
+        current_best = None
+
+    if current_best is None or depth > current_best:
+        with open(path, "w") as f:
+            f.write(f"Pilot: {pilot}\n")
+            f.write(f"Depth: {depth} m\n")
 
 # --- END YOUR CODE -----------------------------------------------------------
 
@@ -271,4 +280,4 @@ if __name__ == "__main__":
     countdown_to_dive(DIVE_COUNTDOWN)
     sub = engine.run(frame)
     save_dive_log(pilot, sub.depth, sub.alive)
-    save_last_summary(pilot, sub.depth, sub.alive)
+    save_best_dive(pilot, sub.depth, sub.alive)

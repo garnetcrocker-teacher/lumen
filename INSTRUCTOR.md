@@ -140,7 +140,7 @@ proctored module tests.
 | **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `clamp_battery()` (if), `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (3-arg `and` chain), `overall_alert()` (elif + `or`, order-sensitive) | 28 known input/output cases, boundary- and ordering-focused |
 | **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and a `while` launch countdown with an `if`/`else` inside it (`countdown_to_dive`, beeps via new `engine.play_tone`/`engine.wait`); `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop over `PULSE_COUNT` animating an outward-sweeping, battery-scaled sonar ping via `engine.now()` and `%` wraparound | boundary-focused value checks; countdown text/beep-order/wait-count checks; tick position + color; sonar radius at controlled `(power, t)` combinations |
 | **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s two real jobs (drawing the dashboard, reading the keyboard) split into two void functions students name and write entirely themselves - no `def` line given, unlike every other checkpoint. `handle_controls()` also gains unbounded sideways movement (`LEFT`/`RIGHT` -> `sub.moving_left`/`sub.moving_right`, two more flags in the exact shape of the existing ones) - genuinely new, not copyable from cp04. Two more functions are value-returning: `format_distance(meters)` turns the engine's new `sub.total_drift` odometer into "340 m"/"1.2 km", and `distance_to_base(sub)` computes the real straight-line distance to the edge of a circular recharge base itself (`dx`/`dy`/sqrt/subtract radius - depth counts, not just sideways position; the base refills O2/power instead of draining them while the sub sits inside it) and turns that into "340 m"/"IN RANGE" by calling `format_distance` internally - both called from inside `draw_dashboard()`, so students see a void function calling value-returning ones of their own, one of which calls another | key-handling side effects incl. the `can_descend` gate and the new drift flags; exact draw calls (text/position/size/color) with no extras or omissions, checked across all three alert levels; `format_distance()`'s and `distance_to_base()`'s formatting branches each checked directly |
-| **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | Back to Module-4-style `def` line + docstring + placeholder body (`pass`/`return 0, 0.0, 0.0, 0.0`) - cp05's bare-comment "write your own def line" was specific to a module about defining functions, not a new permanent style. Three functions: `save_dive_log(pilot, depth, alive, path)` appends one CSV row per dive (`pilot,depth,outcome`) to `dive_log.csv`, writing a header first if the file doesn't exist yet (`os.path.exists`, not an exception - append mode never raises `FileNotFoundError`); `load_dive_stats(path)` reads that same log back and returns `(count, average, minimum, maximum)` as a 4-tuple, wrapping the read in `try`/`except FileNotFoundError` for a fresh install; `save_last_summary(pilot, depth, alive, path)` writes a 3-line human-readable snapshot of just the most recent dive to a *second* file, `last_dive.txt`, opened in write mode (`"w"`) instead of append mode - each call replaces it outright, the direct contrast to `save_dive_log`'s append behavior. All three are called from provided (not student-written) intake/post-dive wiring; `engine.run()` returns the final `sub` so `main.py` can log how the dive ended | header written exactly once, never duplicated on later calls; correct `SURVIVED`/`LOST` outcome; `load_dive_stats()`'s count/average/min/max all checked against several out-of-order logged depths, not just the first or last row, plus `(0, 0.0, 0.0, 0.0)` on a missing file; `save_last_summary()` checked to genuinely replace its file on a second call, not append to it |
+| **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | Back to Module-4-style `def` line + docstring + placeholder body (`pass`/`return 0, 0.0, 0.0, 0.0`) - cp05's bare-comment "write your own def line" was specific to a module about defining functions, not a new permanent style. Three functions: `save_dive_log(pilot, depth, alive, path)` appends one CSV row per dive (`pilot,depth,outcome`) to `dive_log.csv`, writing a header first if the file doesn't exist yet (`os.path.exists`, not an exception - append mode never raises `FileNotFoundError`); `load_dive_stats(path)` reads that same log back and returns `(count, average, minimum, maximum)` as a 4-tuple, wrapping the read in `try`/`except FileNotFoundError` for a fresh install; `save_best_dive(pilot, depth, alive, path)` reads a *second* file, `best_dive.txt`, wrapping that read in `try`/`except FileNotFoundError` too, and only overwrites it - in write mode (`"w"`) - when this dive is both `alive` and deeper than whatever depth it just read back out. Most dives leave the file untouched, so this is a read-compare-then-maybe-write, a genuinely different shape from `save_dive_log`'s unconditional append. All three are called from provided (not student-written) intake/post-dive wiring; `engine.run()` returns the final `sub` so `main.py` can log how the dive ended | header written exactly once, never duplicated on later calls; correct `SURVIVED`/`LOST` outcome; `load_dive_stats()`'s count/average/min/max all checked against several out-of-order logged depths, not just the first or last row, plus `(0, 0.0, 0.0, 0.0)` on a missing file; `save_best_dive()` checked to set the record on the first survived dive, leave it alone against both a shallower survived dive and a deeper *unsurvived* one, and overwrite it only when a later dive is both alive and deeper |
 | **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | Single creature -> `creatures = []`; spawn/append; `for c in creatures` update+draw; cull; `(x, y)` tuples; max/min/len over depths | many independent creatures; list ops correct; stats correct |
 | **cp08_strings** | Oct 27 | 8 - More About Strings | Species-code builder `f"{p}-{n:04d}"`; parse a scanned code back with slicing/`split`; normalize names; reverse/shift decode puzzle | code format; round-trip parse; decode returns expected string |
 | **cp09_dicts** | Oct 29, Nov 3 | 9 - Dictionaries & Sets | `CATALOG = {code: {...}}`; `discovered = set()`; score = sum of points; `DEPTH_ZONES` lookup; achievements set | no double-scoring; catalog counts; zone lookup by depth |
@@ -416,7 +416,7 @@ behavior. No `check.py` regressions through any of the four attempts,
 since nothing there depends on `drift_speed`, `distance_to_base_edge`'s
 input scale, or `world_x_to_screen`.
 
-### The dive log (`save_dive_log`/`load_dive_stats`/`save_last_summary`) - cp06's design
+### The dive log (`save_dive_log`/`load_dive_stats`/`save_best_dive`) - cp06's design
 
 Module 6 is Files & Exceptions, not Functions, so the `def` lines are
 given back this week - cp05's bare-comment "write your own def line"
@@ -452,13 +452,21 @@ the same read/write shape three times:
   means tracking four running values in one pass instead of one. Renamed
   from `load_best_depth` to `load_dive_stats` since "best depth" no
   longer describes what it returns.
-- `save_last_summary` writes a *second* file, `last_dive.txt`, opened in
-  write mode (`"w"`) instead of append mode - each call replaces it
-  outright. That's the actual second use of files the checkpoint needed:
-  not a different file for its own sake, but a file whose correct
-  behavior is the opposite of `save_dive_log`'s (replace vs. accumulate),
-  so append-vs-write is something students have to get right twice, in
-  two directions, not just read about once.
+- `save_best_dive` writes a *second* file, `best_dive.txt`, but not
+  unconditionally - it's the deepest dive ever **survived**, so each
+  call has to read the existing record back out first (same
+  `try`/`except FileNotFoundError` shape as `load_dive_stats`, for a
+  file that might not exist yet), compare, and only open the file in
+  write mode (`"w"`) when this dive is both `alive` and deeper than
+  what it read. First draft of this second function was
+  `save_last_summary` - an unconditional-write snapshot of the most
+  recent dive. Caught in review as pointless: it just restates data
+  already sitting in `dive_log.csv`'s last row, so it wasn't a real
+  second use of files, just a second file. `save_best_dive` fixes that -
+  it's a read-compare-then-*maybe*-write, which is a genuinely different
+  shape from `save_dive_log`'s unconditional append, and the record it
+  tracks isn't derivable from a single row of the log the way "the last
+  dive" was.
 
 Two distinct file-handling ideas stayed assigned to two distinct
 functions, on purpose: `save_dive_log` decides whether to write a header
@@ -469,7 +477,7 @@ file). `load_dive_stats` decides whether the file exists at all using
 raise if the file isn't there. Giving both problems to one function
 would blur the distinction Module 6 is actually about.
 
-`check.py` never touches the real `dive_log.csv`/`last_dive.txt` - every
+`check.py` never touches the real `dive_log.csv`/`best_dive.txt` - every
 test passes an explicit test-only path, reset with `os.remove` before
 the tests that need a clean slate. This matters because a student
 running `check.py` locally, after having actually played the game for
@@ -483,10 +491,10 @@ fix made along the way: grouping several assertions under one shared
 raises early (a no-op stub never creates the file, so every subsequent
 read raises) - this shrinks the denominator `check.py` reports against,
 since `_report` scores against `len(results)`, not the `TOTAL_CHECKS`
-constant. Fixed by giving `save_last_summary`'s three assertions their
-own independent `try`/`except` blocks, matching the one-assertion-per-try
-shape used everywhere else in this file - confirmed the blank stub now
-reports consistently against 15, not a shrunken count.
+constant. Fixed by giving each assertion its own independent `try`/`except` block,
+matching the one-assertion-per-try shape used everywhere else in this
+file - confirmed the blank stub now reports consistently against the
+full denominator, not a shrunken count.
 
 Verified beyond `check.py`: called the real (non-headless) `engine.run()`
 with a faked immediate `QUIT` event and confirmed it returns an actual
@@ -494,11 +502,11 @@ with a faked immediate `QUIT` event and confirmed it returns an actual
 or a stub. Full checkpoint regression re-run afterward (the `run()`
 signature change touches every checkpoint that calls it, even though none
 of them capture the return value yet): cp02 2/9, cp03 9/28, cp04 2/20,
-cp05 solution 21/21 (unchanged), cp06 solution 15/15, cp06 blank stub
-1/15 (the one pass is `load_dive_stats`'s missing-file case, which a
-`return 0, 0.0, 0.0, 0.0` placeholder body satisfies by coincidence -
-same shape as earlier checkpoints' blank stubs never scoring a clean
-zero).
+cp05 solution 21/21 (unchanged), cp06 solution 17/17, cp06 blank stub
+1/17 (the one pass is
+`load_dive_stats`'s missing-file case, which a `return 0, 0.0, 0.0, 0.0`
+placeholder body satisfies by coincidence - same shape as earlier
+checkpoints' blank stubs never scoring a clean zero).
 
 ### Sonar - what it's for, and where it's going
 
