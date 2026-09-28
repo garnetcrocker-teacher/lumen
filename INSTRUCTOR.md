@@ -140,7 +140,7 @@ proctored module tests.
 | **cp03_decisions** | Sep 10, 15 | 3 - Decisions & Boolean Logic | Bodies of `clamp_battery()` (if), `hull_status()`, `oxygen_state()` (if/elif/else), `can_descend()` (3-arg `and` chain), `overall_alert()` (elif + `or`, order-sensitive) | 28 known input/output cases, boundary- and ordering-focused |
 | **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and a `while` launch countdown with an `if`/`else` inside it (`countdown_to_dive`, beeps via new `engine.play_tone`/`engine.wait`); `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop over `PULSE_COUNT` animating an outward-sweeping, battery-scaled sonar ping via `engine.now()` and `%` wraparound | boundary-focused value checks; countdown text/beep-order/wait-count checks; tick position + color; sonar radius at controlled `(power, t)` combinations |
 | **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s two real jobs (drawing the dashboard, reading the keyboard) split into two void functions students name and write entirely themselves - no `def` line given, unlike every other checkpoint. `handle_controls()` also gains unbounded sideways movement (`LEFT`/`RIGHT` -> `sub.moving_left`/`sub.moving_right`, two more flags in the exact shape of the existing ones) - genuinely new, not copyable from cp04. Two more functions are value-returning: `format_distance(meters)` turns the engine's new `sub.total_drift` odometer into "340 m"/"1.2 km", and `distance_to_base(sub)` computes the real straight-line distance to the edge of a circular recharge base itself (`dx`/`dy`/sqrt/subtract radius - depth counts, not just sideways position; the base refills O2/power instead of draining them while the sub sits inside it) and turns that into "340 m"/"IN RANGE" by calling `format_distance` internally - both called from inside `draw_dashboard()`, so students see a void function calling value-returning ones of their own, one of which calls another | key-handling side effects incl. the `can_descend` gate and the new drift flags; exact draw calls (text/position/size/color) with no extras or omissions, checked across all three alert levels; `format_distance()`'s and `distance_to_base()`'s formatting branches each checked directly |
-| **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | `save_dive_log()`, `load_best_depth()` with `try/except FileNotFoundError`; append discoveries to CSV | file written/read; missing file handled; best depth persists |
+| **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | `def` lines given again (unlike cp05) - the exercise is file I/O, not function-definition syntax. `save_dive_log(pilot, depth, alive, path)` appends one CSV row per dive (`pilot,depth,outcome`), writing a header line first if the file doesn't exist yet (checked with `os.path.exists`, not an exception); `load_best_depth(path)` reads the log back and returns the deepest depth ever logged, wrapping the read in `try`/`except FileNotFoundError` to handle a fresh install with nothing logged yet. Both are called from the provided (not student-written) pre-dive intake/post-dive wiring - `engine.run()` now returns the final `sub` so `main.py` can log how the dive ended | header written exactly once, never duplicated on later calls; correct `SURVIVED`/`LOST` outcome; `load_best_depth()` returns the *maximum* across several out-of-order logged depths, not the first or last row, and returns `0.0` (a `float`) on a missing file |
 | **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | Single creature -> `creatures = []`; spawn/append; `for c in creatures` update+draw; cull; `(x, y)` tuples; max/min/len over depths | many independent creatures; list ops correct; stats correct |
 | **cp08_strings** | Oct 27 | 8 - More About Strings | Species-code builder `f"{p}-{n:04d}"`; parse a scanned code back with slicing/`split`; normalize names; reverse/shift decode puzzle | code format; round-trip parse; decode returns expected string |
 | **cp09_dicts** | Oct 29, Nov 3 | 9 - Dictionaries & Sets | `CATALOG = {code: {...}}`; `discovered = set()`; score = sum of points; `DEPTH_ZONES` lookup; achievements set | no double-scoring; catalog counts; zone lookup by depth |
@@ -416,6 +416,58 @@ behavior. No `check.py` regressions through any of the four attempts,
 since nothing there depends on `drift_speed`, `distance_to_base_edge`'s
 input scale, or `world_x_to_screen`.
 
+### The dive log (`save_dive_log`/`load_best_depth`) - cp06's design
+
+Module 6 is Files & Exceptions, not Functions, so the `def` lines are
+given back this week (`save_dive_log(pilot, depth, alive, path=...)`,
+`load_best_depth(path=...)`) - cp05's "write your own def line" was a
+one-time device tied specifically to a module that teaches defining
+functions, not a permanent ratchet. The exercise this week is file I/O
+and exception handling, so the signatures are provided the same way
+cp02-cp04's were, and the bodies are the work.
+
+`engine.run()` now `return sub` at the very end (after `pygame.quit()`),
+instead of returning nothing. That's the only engine.py change this
+checkpoint needed - `main.py`'s `if __name__` block already captures it
+(`sub = engine.run(frame)`) and passes `sub.depth`/`sub.alive` to
+`save_dive_log()`, all in code that's *provided*, not part of the YOUR
+CODE section - students only write what happens inside the two functions
+themselves, not the wiring that calls them. `HEADLESS` mode now
+`return None` explicitly instead of falling off the end (same behavior,
+just an explicit `None` instead of an implicit one, since the function
+now has a real return value on the other path).
+
+Two distinct file-handling ideas got assigned to two distinct functions
+on purpose, rather than cramming both into one: `save_dive_log` decides
+whether to write a header using `os.path.exists()` - a plain check, no
+exception needed, since opening a file in append mode (`"a"`) never
+raises `FileNotFoundError` (it creates the file). `load_best_depth`
+decides whether the file exists at all using `try`/`except
+FileNotFoundError` around the actual read - which does raise if the file
+isn't there. Giving both problems to one function would blur the
+distinction Module 6 is actually about; splitting them across the two
+functions each checkpoint already needs means each technique gets its
+own uncontested example.
+
+`check.py` never touches the real `dive_log.csv` - every test passes an
+explicit `path=TEST_LOG` (`test_dive_log.csv`), reset with `os.remove`
+before the tests that need a clean slate. This matters because a student
+running `check.py` locally, after having actually played the game for
+real, would otherwise have their own genuine best-depth history
+clobbered by the grader on every run. The three depths logged in the
+"returns the maximum" test (100, 500, 250, in that order) are
+deliberately out of order, so an implementation that only checks the
+first or last row instead of tracking a running max fails clearly.
+
+Verified beyond `check.py`: called the real (non-headless) `engine.run()`
+with a faked immediate `QUIT` event and confirmed it returns an actual
+`Submarine` object with real `depth`/`alive`/`pilot` values, not `None`
+or a stub. Full checkpoint regression re-run afterward (the `run()`
+signature change touches every checkpoint that calls it, even though none
+of them capture the return value yet): cp02 2/9, cp03 9/28, cp04 2/20,
+cp05 solution 21/21 (unchanged), cp06 solution 10/10, cp06 blank stub
+0/10.
+
 ### Sonar - what it's for, and where it's going
 
 cp04's sonar sweep isn't meant to stay decoration. The design intent is a
@@ -597,7 +649,7 @@ every checkpoint, same as `check.py` always has been. No sync rework needed.
 ## Status of this repo
 
 - [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD (pilot / target-depth line / ballast->dive-rate / power), dive-plan I/O, `draw_tick` (optional color arg from cp04 on), `draw_ring`, `draw_hud_text` (dashboard layer composited on top of the darkness so status readouts never get dimmed - see below), `play_tone`/`wait` (synthesized beeps + pause, from cp04 on - no-ops under `LUMEN_HEADLESS`)
-- [x] `cp02_io`, `cp03_decisions`, `cp04_loops`, `cp05_functions` - complete (main + briefing + check + reference solution)
+- [x] `cp02_io`, `cp03_decisions`, `cp04_loops`, `cp05_functions`, `cp06_files` - complete (main + briefing + check + reference solution)
 - [ ] `cp06` - `cp12` - not built yet
 - [ ] `solution/lumen_full.py` - the finished game for playtesting - not built yet
 - [ ] `tools/build_zips.py` - one-command per-checkpoint zip builder - not built yet

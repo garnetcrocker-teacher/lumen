@@ -582,9 +582,10 @@ def run(frame_fn, setup_fn=None, title="LUMEN - a descent"):
     darkness and the base HUD.  Anything you draw with draw_hud_text (or via
     draw_hull_status / draw_tick) is composited back on TOP of the darkness, so
     dashboard readouts never get swallowed by the dark, only the world outside
-    your window does.  ESC or the window's close button quits."""
+    your window does.  ESC or the window's close button quits.  Returns the
+    Submarine once the window closes, so you can log how the dive ended."""
     if HEADLESS:
-        return
+        return None
     plan = load_diveplan()
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -622,6 +623,7 @@ def run(frame_fn, setup_fn=None, title="LUMEN - a descent"):
         pygame.display.flip()
 
     pygame.quit()
+    return sub
 
 
 # A no-argument fallback so `python engine.py` shows something rather than nothing.
