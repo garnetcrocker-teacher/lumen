@@ -79,9 +79,7 @@ DIVE_MS = 400
 # already sitting in there, word-for-word.
 #
 # format_distance(meters) - returns a string, e.g. "340 m" or "1.2 km"
-#     sub.total_drift is a running total (built by the engine, in meters)
-#     of how far you've drifted sideways, either direction. Nothing to copy
-#     here - write the logic yourself:
+#     Nothing to copy here - write the logic yourself:
 #         - below 1000, show it in meters, no decimal place: "340 m"
 #         - 1000 or above, show it in kilometers, one decimal place instead:
 #           "1.2 km"
@@ -91,7 +89,7 @@ DIVE_MS = 400
 # distance_to_base(sub) - returns a string, e.g. "340 m" or "IN RANGE"
 #     There's a recharge base somewhere in the world - a circular area,
 #     not a single exact point. sub.base_x/sub.base_depth mark its center,
-#     sub.base_radius its size, all in the same real meters as sub.x and
+#     sub.base_radius its size. Meanwhile, you have the sub's position as sub.x and
 #     sub.depth. Find the straight-line distance from the sub to the
 #     base's center using the Pythagorean theorem - the sideways gap and
 #     the depth gap are the two legs of a right triangle, the straight-line
@@ -115,7 +113,9 @@ DIVE_MS = 400
 #     Two more lines, and these are new - nothing to copy for either.
 #
 #     Add a draw_hud_text call reading exactly "DRIFTED: " followed by
-#     whatever format_distance(sub.total_drift) returns. Put it in the
+#     whatever format_distance(sub.total_drift) returns. sub.total_drift is a
+#     running total (built by the engine, in meters)
+#     of how far you've drifted sideways, either direction.  Put it in the
 #     bottom-right corner, mirroring the hint line's bottom-left spot:
 #     position (engine.WIDTH - 16, engine.HEIGHT - 26), anchor "topright",
 #     same size (13) and color (120, 140, 155) as the hint line.
@@ -129,7 +129,7 @@ DIVE_MS = 400
 #     Everything frame() used to do with handling DOWN / UP / L.
 #       (NOT DRAWING these controls though, that should be done above)
 #     PLUS something new this week, not in Checkpoint 4: LEFT and RIGHT now
-#     let you drift sideways. There's nothing to copy for this part - mirror
+#     let you drift sideways. There's nothing to copy for that part - mirror
 #     the exact shape of your DOWN/UP lines instead:
 #         - LEFT held -> sub.moving_left = True
 #         - RIGHT held -> sub.moving_right = True
@@ -138,8 +138,7 @@ DIVE_MS = 400
 #     sub.ascending.
 #
 # draw_dashboard and handle_controls are void; format_distance and
-# distance_to_base return a string. No def line is written for you on any
-# of them; name and parameters are your call.
+# distance_to_base return a string.
 # --- END YOUR CODE -----------------------------------------------------------
 
 

@@ -7,14 +7,14 @@
 
 ## The story so far
 
-`frame()` has really only ever done two jobs: draw the dashboard, and read
+Two of the `frame()` function's main jobs have been: draw the dashboard, and read
 the keyboard. Until now both jobs sat inline, mixed into one function. This
-week you pull each job out into its own function. Almost nothing you write
+week you pull each job out into its own function. Almost nothing you write for that part
 changes what the game looks like when it runs - if you do it right, it
 should look and play just like Checkpoint 4 did for the depth gauge, sonar,
 and HUD, just organized better.
 
-You can now drift sideways with `LEFT`/`RIGHT`. The sub stays centered on
+For new stuff: you can now drift sideways with `LEFT`/`RIGHT`. The sub stays centered on
 screen either way - the water and the drifting specks scroll past it
 instead, the same way the world already scrolls vertically as you dive.
 There's no limit to how far you can go in either direction, and the game
@@ -23,11 +23,10 @@ direction - it's on the dashboard, bottom right.
 
 There's also a reason to drift now, not just the ability to: a circular
 recharge base sits somewhere out there (`sub.base_x`/`sub.base_depth`
-mark its center, `sub.base_radius` its size). Get within the circle -
-depth counts too, not just sideways position, and you don't need to land
-on an exact point, just get inside it - and your oxygen and power refill
+mark its center, `sub.base_radius` its size). Get within the circle, and you don't
+need to land on an exact point, just get inside it, and your oxygen and power refill
 instead of draining. Your own `POSITION` reading (top-left, under
-`DEPTH`) tells you where you are; this week you build the piece that
+`DEPTH`) tells you where you are; you will build the piece that
 tells you how far the base's edge still is, so you know when you've
 actually made it.
 
@@ -35,9 +34,8 @@ Most of `draw_dashboard` and `handle_controls` should be quick - you're not
 writing new logic for them, nearly every line you need is already sitting
 almost word-for-word inside your own Checkpoint 4 `main.py`'s `frame()`.
 Open it side by side with this one. The sideways movement flags, the
-odometer readout, and the base-distance readout are the pieces that are
-genuinely new - and the two new readouts need two new functions,
-`format_distance` and `distance_to_base`, to decide how to show them.
+odometer readout, and the base-distance readout are new pieces, and the two
+new readouts need two new functions, `format_distance` and `distance_to_base`, to decide how to show them.
 
 ---
 
@@ -58,9 +56,7 @@ yourself and writing the whole thing.
 
 ### 1. `format_distance(meters)` - returns a string
 
-The engine now keeps `sub.total_drift`, a running total in meters of how
-far you've drifted sideways, counting both directions. Write a function
-that turns that number into a display string:
+Write a function that turns a meters number into a display string:
 
 - below 1000, show it in meters, no decimal place: `"340 m"`
 - 1000 or above, show it in kilometers, one decimal place instead:
@@ -89,8 +85,7 @@ the *edge* you are - 0 or negative once you're inside - then:
 - otherwise -> return `format_distance()` of that edge distance
 
 Nothing to copy here either - it's new, same as `format_distance`. Notice
-this one calls that one: a function you wrote calling another function you
-wrote, which is exactly the kind of thing this module is about.
+this one calls that one: nested functions.
 
 ### 3. `draw_dashboard(screen, sub, alert)` - void
 
@@ -112,7 +107,8 @@ Call `format_distance(sub.total_drift)` and draw the result as
 `"DRIFTED: " + format_distance(sub.total_drift)`, in the bottom-right
 corner - mirroring the hint line's spot in the bottom-left. Same size (13)
 and color (`(120, 140, 155)`) as the hint line, position
-`(engine.WIDTH - 16, engine.HEIGHT - 26)`, anchor `"topright"`.
+`(engine.WIDTH - 16, engine.HEIGHT - 26)`, anchor `"topright"`. The engine keeps
+`sub.total_drift`, a running total in meters of how far you've drifted sideways, counting both directions. 
 
 Call `distance_to_base(sub)` and draw the result as
 `"BASE: " + distance_to_base(sub)`, at `(engine.WIDTH // 2, 86)`, anchor
