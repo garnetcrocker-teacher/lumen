@@ -12,7 +12,7 @@ import sys
 
 os.environ["LUMEN_HEADLESS"] = "1"
 
-TOTAL_CHECKS = 17
+TOTAL_CHECKS = 19
 
 TEST_LOG = "test_dive_log.csv"
 TEST_BEST = "test_best_dive.txt"
@@ -117,18 +117,65 @@ def main():
         student.save_dive_log("A", 100.0, True, TEST_LOG)
         student.save_dive_log("B", 500.0, False, TEST_LOG)
         student.save_dive_log("C", 250.0, True, TEST_LOG)
+    except Exception:
+        pass
+
+    try:
         count, average, minimum, maximum = student.load_dive_stats(TEST_LOG)
         check("load_dive_stats() counts all three logged dives",
               count == 3, f"got count={count!r}")
+    except Exception as exc:
+        check("load_dive_stats() counts all three logged dives", False, repr(exc))
+
+    try:
+        count, average, minimum, maximum = student.load_dive_stats(TEST_LOG)
         check("load_dive_stats() computes the correct average depth (283.33...)",
               abs(average - (100.0 + 500.0 + 250.0) / 3) < 0.01, f"got average={average!r}")
+    except Exception as exc:
+        check("load_dive_stats() computes the correct average depth (283.33...)",
+              False, repr(exc))
+
+    try:
+        count, average, minimum, maximum = student.load_dive_stats(TEST_LOG)
         check("load_dive_stats() finds the correct minimum depth (100.0)",
               abs(minimum - 100.0) < 0.01, f"got minimum={minimum!r}")
+    except Exception as exc:
+        check("load_dive_stats() finds the correct minimum depth (100.0)", False, repr(exc))
+
+    try:
+        count, average, minimum, maximum = student.load_dive_stats(TEST_LOG)
         check("load_dive_stats() finds the correct maximum depth (500.0), "
               "not just the first or last row",
               abs(maximum - 500.0) < 0.01, f"got maximum={maximum!r}")
     except Exception as exc:
-        check("load_dive_stats() computes count/average/min/max correctly", False, repr(exc))
+        check("load_dive_stats() finds the correct maximum depth (500.0), "
+              "not just the first or last row", False, repr(exc))
+
+    # --- load_dive_stats: skips a corrupted row instead of crashing ------------
+    _reset()
+    with open(TEST_LOG, "w") as f:
+        f.write("pilot,depth,outcome\n")
+        f.write("A,100.0,SURVIVED\n")
+        f.write("Ghost,not_a_number,LOST\n")
+        f.write("B,300.0,SURVIVED\n")
+
+    try:
+        count, average, minimum, maximum = student.load_dive_stats(TEST_LOG)
+        check("load_dive_stats() does not crash on a row with a bad depth field",
+              True)
+    except Exception as exc:
+        check("load_dive_stats() does not crash on a row with a bad depth field",
+              False, repr(exc))
+
+    try:
+        count, average, minimum, maximum = student.load_dive_stats(TEST_LOG)
+        check("load_dive_stats() skips the corrupted row, counting only the 2 valid dives",
+              count == 2 and abs(average - 200.0) < 0.01 and abs(minimum - 100.0) < 0.01
+              and abs(maximum - 300.0) < 0.01,
+              f"got count={count!r}, average={average!r}, minimum={minimum!r}, maximum={maximum!r}")
+    except Exception as exc:
+        check("load_dive_stats() skips the corrupted row, counting only the 2 valid dives",
+              False, repr(exc))
 
     # --- save_best_dive: first survived dive becomes the record ----------------
     _reset()

@@ -79,6 +79,11 @@ field, and convert it to a `float`.
 Track a running count, a running total, and a running minimum and
 maximum as you go, then divide the total by the count for the average.
 
+A row's depth field might not convert to a `float` (a hand-edited or
+corrupted line). Wrap that conversion in its own `try`/`except
+ValueError` and skip the row instead of letting it crash the whole
+read.
+
 The first time this runs, the file won't exist yet. Wrap the open in
 `try`/`except FileNotFoundError` and return `(0, 0.0, 0.0, 0.0)` from
 the `except` block. A fresh install with nothing logged yet isn't a
@@ -124,7 +129,7 @@ still doesn't change.
 
 ## Done when
 
-`python check.py` prints **17 / 17** (100 points). It checks, against
+`python check.py` prints **19 / 19** (100 points). It checks, against
 dedicated test files (never your real `dive_log.csv` or `best_dive.txt`):
 
 - `load_dive_stats()` returns `(0, 0.0, 0.0, 0.0)` on a file that doesn't
@@ -133,6 +138,8 @@ dedicated test files (never your real `dive_log.csv` or `best_dive.txt`):
 - saved rows record the pilot's name and the correct outcome
 - `load_dive_stats()` returns the correct count, average, minimum, and
   maximum across several logged dives
+- `load_dive_stats()` skips a row with a corrupted depth field instead
+  of crashing, and still gets the stats right for the rest
 - `save_best_dive()` sets the record on the first survived dive, leaves
   it alone for a shallower or unsurvived dive, and overwrites it for a
   deeper survived one
@@ -155,6 +162,11 @@ uses.
   needed.
 - Convert the depth field with `float()` before comparing it to
   anything, or you'll be comparing text instead of numbers.
+- `float()` raises `ValueError` on a field that isn't a number.
+  Catching it per row (and using `continue` to move on) is different
+  from the `FileNotFoundError` catch around the whole file: one
+  recovers from a single bad line, the other from the file not
+  existing at all.
 - `return a, b, c, d` packs multiple values into one tuple; unpack it
   the same way on the other end: `count, average, minimum, maximum =
   load_dive_stats()`.

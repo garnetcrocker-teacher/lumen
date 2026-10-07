@@ -62,7 +62,10 @@ def load_dive_stats(path=DIVE_LOG_PATH):
     maximum = None
     for line in lines[1:]:
         fields = line.strip().split(",")
-        depth = float(fields[1])
+        try:
+            depth = float(fields[1])
+        except ValueError:
+            continue
         count += 1
         total += depth
         if minimum is None or depth < minimum:

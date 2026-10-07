@@ -96,6 +96,11 @@ def load_dive_stats(path=DIVE_LOG_PATH):
     and maximum as you go, then divide the total by the count for the
     average.
 
+    A row's depth field might not convert to a float (a hand-edited or
+    corrupted line). Wrap that conversion in its own try/except
+    ValueError and skip the row instead of letting it crash the whole
+    read.
+
     The first time this runs, the file won't exist yet. Wrap the open
     in try/except FileNotFoundError and return (0, 0.0, 0.0, 0.0) from
     the except block.
