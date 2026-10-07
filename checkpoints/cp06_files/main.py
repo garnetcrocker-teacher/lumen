@@ -5,43 +5,35 @@ Module 6: Files & Exceptions
     Run the game:      python main.py      (press ESC or close the window to quit)
     Check your work:    python check.py
 
-Your job this week is the THREE functions in the YOUR CODE section below:
-save_dive_log, load_dive_stats, save_best_dive. The def lines and
-docstrings are written for you - fill in each body.
+Your job this week is the three functions in the YOUR CODE section
+below: save_dive_log, load_dive_stats, save_best_dive. The def lines
+and docstrings are already written; fill in each body.
 
-Every dive, however it ends, touches two files that survive between runs
-of the game:
+Every dive touches two files that survive between runs of the game.
+dive_log.csv grows by one line per dive, a running history that
+save_dive_log writes and load_dive_stats reads back. best_dive.txt
+holds only the current record, the deepest dive ever survived: most
+dives leave it alone, and save_best_dive only overwrites it when this
+dive is alive and deeper than what's already there. Neither file
+exists the first time anyone runs the game, so reading either one has
+to survive that.
 
-  - dive_log.csv grows by one line every dive - a running history. This
-    is the same file both save_dive_log and load_dive_stats work with.
-  - best_dive.txt holds only the current record - the deepest dive ever
-    SURVIVED. Most dives leave it untouched; it only gets overwritten
-    when this dive is both alive and deeper than whatever's already in
-    it. That's a read-compare-then-maybe-write, on top of the plain
-    append/write contrast dive_log.csv already gives you.
+Already wired up outside the YOUR CODE section: load_dive_stats() runs
+at the top of the pre-dive intake, and save_dive_log()/save_best_dive()
+both run right after engine.run() returns, using the sub it hands back.
+You don't need to add either call yourself.
 
-Both files start out not existing at all - the first time anyone ever
-runs the game, reading either one has to survive that without crashing.
+Checkpoints 2 through 5 are carried into the bottom of this file as
+reference versions: Checkpoint 5's four functions (format_distance,
+distance_to_base, draw_dashboard, handle_controls), Checkpoint 4's four
+(read_valid_depth, countdown_to_dive, draw_depth_ticks,
+draw_sonar_rings), Checkpoint 3's five (clamp_battery, hull_status,
+oxygen_state, can_descend, overall_alert), and Checkpoint 2's intake
+inside `if __name__ == "__main__":`. If you did those checkpoints,
+paste your own versions in over them.
 
-Already wired up for you, outside the YOUR CODE section: load_dive_stats()
-is called at the top of the pre-dive intake (so you see your history
-before you dive), and save_dive_log()/save_best_dive() are both called
-right after engine.run() returns, using the sub it hands back. You don't
-need to add either call yourself - just make the three functions work.
-
-Checkpoints 2, 3, 4, and 5 are carried into the BOTTOM of this file:
-  - Checkpoint 5's four functions (format_distance, distance_to_base,
-    draw_dashboard, handle_controls) are reference versions.
-  - Checkpoint 4's four functions (read_valid_depth, countdown_to_dive,
-    draw_depth_ticks, draw_sonar_rings) are reference versions.
-  - Checkpoint 3's five functions (clamp_battery, hull_status, oxygen_state,
-    can_descend, overall_alert) are reference versions.
-  - Checkpoint 2's pre-dive intake is inside `if __name__ == "__main__":`.
-Working reference versions are filled in so the game runs either way - if
-you did those checkpoints, paste your own versions in over them.
-
-Controls once it runs:  DOWN = dive,  UP = rise,  LEFT/RIGHT = drift
-sideways,  L = toggle light
+Controls once it runs: DOWN dive, UP rise, LEFT/RIGHT drift sideways,
+L toggle light.
 """
 
 import os
@@ -76,69 +68,58 @@ BEST_PATH = "best_dive.txt"             # overwritten only when the record is be
 # --- BEGIN YOUR CODE (Checkpoint 6) -----------------------------------------
 
 def save_dive_log(pilot, depth, alive, path=DIVE_LOG_PATH):
-    """Append one line to the CSV dive log at `path`, recording this dive:
-    the pilot's name, the final depth reached, and the outcome -
-    "SURVIVED" if `alive` is True, "LOST" otherwise. Join those three
-    pieces into one comma-separated line, the same shape as
+    """Append one line to the CSV dive log at `path`: the pilot's name,
+    the final depth reached, and the outcome ("SURVIVED" if `alive` is
+    True, "LOST" otherwise), comma-separated in the same shape as
     DIVE_LOG_HEADER above.
 
-    If the file doesn't exist yet, this is the first dive ever logged -
-    write DIVE_LOG_HEADER as its own line first, before this dive's line.
-    os.path.exists(path) tells you whether the file is already there -
-    check that BEFORE you open it, since opening it in append mode is
-    what would create it.
+    If the file doesn't exist yet, write DIVE_LOG_HEADER as its own
+    line first. Check os.path.exists(path) before opening the file,
+    since opening it in append mode is what would create it.
 
-    Open the file in append mode ("a") so every call adds a line without
-    erasing what's already there. A with block is the cleanest way to
-    make sure the file gets closed once you're done writing to it.
+    Open the file in append mode ("a") so every call adds a line
+    without erasing what's already there.
 
-    Void - nothing to return.
+    Void. Nothing to return.
     """
     pass
 
 
 def load_dive_stats(path=DIVE_LOG_PATH):
-    """Read the dive log at `path` and return FOUR numbers describing
-    every dive ever logged: how many there have been, their average
-    depth, the shallowest depth, and the deepest depth - in that order,
-    as (count, average, minimum, maximum).
+    """Read the dive log at `path` and return (count, average, minimum,
+    maximum): how many dives have been logged, their average depth,
+    the shallowest, and the deepest.
 
-    Skip the header line; every line after that is "pilot,depth,outcome".
-    Split each one apart, pull out the depth field, and convert it to a
-    float. As you go through the rest of the file, keep a running count,
-    a running total (so you can compute the average once you've seen
-    every line), and a running minimum and maximum.
+    Skip the header line. Every line after that is
+    "pilot,depth,outcome": split it apart, pull out the depth field,
+    and convert it to a float. Track a running count, total, minimum,
+    and maximum as you go, then divide the total by the count for the
+    average.
 
-    The very first time this ever runs, the file won't exist. Wrap
-    whatever opens the file in a try/except FileNotFoundError, and
-    return (0, 0.0, 0.0, 0.0) from the except block - no dives logged
-    yet isn't a crash, it's the starting state.
-
-    Returns a tuple of four numbers: (count, average, minimum, maximum).
+    The first time this runs, the file won't exist yet. Wrap the open
+    in try/except FileNotFoundError and return (0, 0.0, 0.0, 0.0) from
+    the except block.
     """
     return 0, 0.0, 0.0, 0.0
 
 
 def save_best_dive(pilot, depth, alive, path=BEST_PATH):
-    """Track the deepest dive ever SURVIVED in a separate file from the
-    growing log. `path` should hold at most two lines at any time -
-    whichever dive currently holds the record:
+    """Track the deepest dive ever survived in a file separate from the
+    growing log. `path` holds at most two lines, for whichever dive
+    currently holds the record:
         Pilot: <pilot>
         Depth: <depth> m
 
-    A dive can only set a new record if `alive` is True - a dive that
-    ended in a hull breach doesn't get to claim the title no matter how
-    deep it went.
+    A dive can only set a new record if `alive` is True.
 
     Try to open and read `path` first, the same way load_dive_stats
-    handles a file that might not exist yet. Pull the existing record's
-    depth back out of it. Then: if the file didn't exist, or this dive
-    is alive AND deeper than that depth, this dive becomes the new
-    record - open the file in write mode ("w") and write the two lines
-    above for the new pilot and depth. Otherwise, leave the file exactly
-    as it was.
+    handles a file that might not exist yet, and pull the existing
+    record's depth back out of it. If the file didn't exist, or this
+    dive is alive and deeper than that depth, write the two lines above
+    to `path` in write mode ("w") for the new pilot and depth.
+    Otherwise leave the file alone.
 
-    Void - nothing to return.
+    Void. Nothing to return.
     """
     pass
 
