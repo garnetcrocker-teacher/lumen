@@ -141,7 +141,7 @@ proctored module tests.
 | **cp04_loops** | Sep 17, 22 | 4 - Repetition | `while` input-validation (`read_valid_depth`) and a `while` launch countdown with an `if`/`else` inside it (`countdown_to_dive`, beeps via new `engine.play_tone`/`engine.wait`); `for` loop over `range()` coloring the depth gauge by a decision reused from cp03's `hull_status`; `for` loop over `PULSE_COUNT` animating an outward-sweeping, battery-scaled sonar ping via `engine.now()` and `%` wraparound | boundary-focused value checks; countdown text/beep-order/wait-count checks; tick position + color; sonar radius at controlled `(power, t)` combinations |
 | **cp05_functions** | Sep 24, 29, Oct 1 | 5 - Functions | `frame()`'s two real jobs (drawing the dashboard, reading the keyboard) split into two void functions students name and write entirely themselves - no `def` line given, unlike every other checkpoint. `handle_controls()` also gains unbounded sideways movement (`LEFT`/`RIGHT` -> `sub.moving_left`/`sub.moving_right`, two more flags in the exact shape of the existing ones) - genuinely new, not copyable from cp04. Two more functions are value-returning: `format_distance(meters)` turns the engine's new `sub.total_drift` odometer into "340 m"/"1.2 km", and `distance_to_base(sub)` computes the real straight-line distance to the edge of a circular recharge base itself (`dx`/`dy`/sqrt/subtract radius - depth counts, not just sideways position; the base refills O2/power instead of draining them while the sub sits inside it) and turns that into "340 m"/"IN RANGE" by calling `format_distance` internally - both called from inside `draw_dashboard()`, so students see a void function calling value-returning ones of their own, one of which calls another | key-handling side effects incl. the `can_descend` gate and the new drift flags; exact draw calls (text/position/size/color) with no extras or omissions, checked across all three alert levels; `format_distance()`'s and `distance_to_base()`'s formatting branches each checked directly |
 | **cp06_files** | Oct 6, 8 | 6 - Files & Exceptions | Back to Module-4-style `def` line + docstring + placeholder body (`pass`/`return 0, 0.0, 0.0, 0.0`) - cp05's bare-comment "write your own def line" was specific to a module about defining functions, not a new permanent style. Three functions: `save_dive_log(pilot, depth, alive, path)` appends one CSV row per dive (`pilot,depth,outcome`) to `dive_log.csv`, writing a header first if the file doesn't exist yet (`os.path.exists`, not an exception - append mode never raises `FileNotFoundError`); `load_dive_stats(path)` reads that same log back and returns `(count, average, minimum, maximum)` as a 4-tuple, wrapping the read in `try`/`except FileNotFoundError` for a fresh install and each row's depth conversion in its own `try`/`except ValueError` to skip a corrupted line instead of crashing; `save_best_dive(pilot, depth, alive, path)` reads a *second* file, `best_dive.txt`, wrapping that read in `try`/`except FileNotFoundError` too, and only overwrites it - in write mode (`"w"`) - when this dive is both `alive` and deeper than whatever depth it just read back out. Most dives leave the file untouched, so this is a read-compare-then-maybe-write, a genuinely different shape from `save_dive_log`'s unconditional append. All three are called from provided (not student-written) intake/post-dive wiring; `engine.run()` returns the final `sub` so `main.py` can log how the dive ended | header written exactly once, never duplicated on later calls; correct `SURVIVED`/`LOST` outcome; `load_dive_stats()`'s count/average/min/max all checked against several out-of-order logged depths, not just the first or last row, plus `(0, 0.0, 0.0, 0.0)` on a missing file and a corrupted row skipped without crashing; `save_best_dive()` checked to set the record on the first survived dive, leave it alone against both a shallower survived dive and a deeper *unsurvived* one, and overwrite it only when a later dive is both alive and deeper |
-| **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | Single creature -> `creatures = []`; spawn/append; `for c in creatures` update+draw; cull; `(x, y)` tuples; max/min/len over depths | many independent creatures; list ops correct; stats correct |
+| **cp07_lists** | Oct 15, 20, 22 | 7 - Lists & Tuples | `def` line + docstring + placeholder body again. Creatures are `(x, depth, speed)` tuples in one provided `creatures` list. Six functions: `spawn_creatures(sub, count)` builds a list with `append` and the `random` module; `distance_to_creature(sub, creature)` indexes or unpacks a tuple and redoes the Pythagorean distance, called from two other functions; `update_creatures(creatures, seconds)` loops by index and rebuilds each tuple in place, since tuples are immutable; `cull_creatures(sub, creatures)` filters into a new list (no remove-while-iterating); `sonar_contacts(sub, creatures)` filters by a power-scaled range, then sorts; `draw_creatures(screen, sub, creatures)` loops, unpacks, and finally uses `world_x_to_screen`, with `facing` from the sign of the speed. `frame()` is provided and runs update/cull/spawn around the sub, so the endless world keeps a small crowd near the player | 22 checks: spawn count, tuple shape, bounds on both sides of `sub.x`, depth floor, speed range, randomness; distance in every direction; in-place update; cull by straight-line distance incl. runs of far creatures; sonar sorted, power-scaled, depth counted; draw position, screen argument, and facing |
 | **cp08_strings** | Oct 27 | 8 - More About Strings | Species-code builder `f"{p}-{n:04d}"`; parse a scanned code back with slicing/`split`; normalize names; reverse/shift decode puzzle | code format; round-trip parse; decode returns expected string |
 | **cp09_dicts** | Oct 29, Nov 3 | 9 - Dictionaries & Sets | `CATALOG = {code: {...}}`; `discovered = set()`; score = sum of points; `DEPTH_ZONES` lookup; achievements set | no double-scoring; catalog counts; zone lookup by depth |
 | **cp10_classes** | Nov 5, 10, 12 | 10 - Classes & OOP | `class Creature` (`__init__`, `update`, `draw`, `distance_to`); `class Submarine`; convert list-of-dicts -> list-of-objects | objects constructed; methods return/behave correctly |
@@ -518,6 +518,58 @@ does-not-crash-on-a-bad-row case, both satisfied by coincidence since
 the placeholder body returns `(0, 0.0, 0.0, 0.0)` without ever opening
 the file).
 
+### The creatures (`spawn`/`distance`/`update`/`cull`/`sonar_contacts`/`draw`) - cp07's design
+
+`def` lines and docstrings are given, same as cp04 and cp06, with Tier 2 hints
+(name the tool, no ready-to-paste code). The exercise is lists and tuples, not
+writing signatures.
+
+A creature is a `(x, depth, speed)` tuple in one provided list. Tuples are
+immutable, which is the point: `update_creatures` can't do `c[0] += ...`, so
+students loop by index and store a rebuilt tuple back. The roadmap stays the
+same: dicts at cp09, a `Creature` class at cp10.
+
+The world is endless, so there is no fixed population. Provided `frame()` keeps
+a crowd of `CREATURE_TARGET` near the sub: update, cull the far ones, top up
+with new spawns. New creatures start `SPAWN_MIN_DX` to `SPAWN_MAX_DX` meters to
+the side. The window is 240 m wide (`WIDTH / PIXELS_PER_METER`), so 130 m is
+just off screen and nothing pops in. `CULL_DISTANCE` (300 m) is larger than the
+farthest possible spawn (about 260 m), so a new creature is never culled the
+frame it appears. Sonar range is `SONAR_RANGE_MAX / PIXELS_PER_METER` = 120 m,
+the same circle cp04's rings draw. The light is about 39 m. Measured over a
+60 s scripted flight with 8 creatures: about 89% of frames have a sonar contact
+and about 22% have a creature inside the light. Crowd size barely moves those
+numbers (5 creatures gave 78% and 25%), because everything lives in a
+600 x 200 m box around the sub. That is deliberately lively, so students testing
+their code see something quickly.
+
+No function here is a manufactured split. `distance_to_creature` is called by
+both `cull_creatures` and `sonar_contacts`, and it is the cp05 Pythagorean
+exercise again on a tuple, which is what makes indexing and unpacking the new
+part. `draw_creatures` is the first use of `world_x_to_screen`, the helper cp05
+built for exactly this. The engine gained one function, `draw_creature(surface,
+pos, facing)`, which clips off-screen creatures itself (like `draw_tick`) and
+draws on the world surface, so the dark hides creatures until the light finds
+them. It was synced into every checkpoint folder; nothing else in the engine
+changed.
+
+Classic mistakes each have a check: removing items while iterating (several far
+creatures in a row), Manhattan instead of straight-line distance (in both cull
+and sonar), forgetting to sort, returning a new list from `update_creatures`
+instead of changing it, ignoring `sub.x` when spawning, spawning on only one
+side, using lists instead of tuples, no depth floor, ignoring `sub.power`, and
+a constant facing. The check reads the constants from the student's own
+`main.py` (`getattr`, with the shipped values as fallback), so tweaking
+`CULL_DISTANCE` for fun doesn't fail the grader. `attempt()` wraps each
+assertion so a crash is one fail and the denominator stays 22. `spawn()` raises
+unless it gets a list of the requested length, so an empty placeholder can't
+pass a vacuous `all([])`.
+
+Verified: solution 22/22, blank stub 0/22, the ten mutants above all caught, the
+untouched stub `main.py` runs 120 frames in the real loop without crashing, and
+the solution flies a 60 s real-loop run (dummy video driver) with creatures
+spawning, drifting, being culled, and the CONTACTS line updating.
+
 ### Sonar - what it's for, and where it's going
 
 cp04's sonar sweep isn't meant to stay decoration. The design intent is a
@@ -533,12 +585,12 @@ That split is the actual point: it gives a reason to approach a sonar contact
 cautiously (worth the battery to light it up and look?) instead of only ever
 reacting to what's already lit.
 
-**Module 7 (Lists) - the concrete next step:** once a `creatures` list exists,
-loop over it, compute each creature's distance from the sub, and light up (or
-draw a blip on) whichever pulse/ring band it falls within - turning the sweep
-from a pure instrument reading into a real "how many things, how close"
-readout. Good Lists material: iterate a list, compute something per item,
-draw conditionally.
+**Module 7 (Lists) - built in cp07:** `sonar_contacts` loops over the
+`creatures` list, keeps the ones within the battery-scaled sonar range, and
+returns their distances sorted nearest first; `frame()` shows the count and the
+nearest one as a CONTACTS line. Creatures themselves are only visible inside
+the light, so sonar says something is out there and the light is what
+identifies it. Per-ring blips are still open if we want them later.
 
 **Later, if still worth it when we get there:**
 - Module 9 (Dicts): differentiate blips by creature type via a lookup, without
@@ -699,7 +751,7 @@ every checkpoint, same as `check.py` always has been. No sync rework needed.
 ## Status of this repo
 
 - [x] `engine.py` v1.0 - window, loop, keyboard, ocean/darkness rendering, sub systems sim, HUD (pilot / target-depth line / ballast->dive-rate / power), dive-plan I/O, `draw_tick` (optional color arg from cp04 on), `draw_ring`, `draw_hud_text` (dashboard layer composited on top of the darkness so status readouts never get dimmed - see below), `play_tone`/`wait` (synthesized beeps + pause, from cp04 on - no-ops under `LUMEN_HEADLESS`)
-- [x] `cp02_io`, `cp03_decisions`, `cp04_loops`, `cp05_functions`, `cp06_files` - complete (main + briefing + check + reference solution)
-- [ ] `cp06` - `cp12` - not built yet
+- [x] `cp02_io`, `cp03_decisions`, `cp04_loops`, `cp05_functions`, `cp06_files`, `cp07_lists` - complete (main + briefing + check + reference solution)
+- [ ] `cp08` - `cp12` - not built yet
 - [ ] `solution/lumen_full.py` - the finished game for playtesting - not built yet
 - [ ] `tools/build_zips.py` - one-command per-checkpoint zip builder - not built yet

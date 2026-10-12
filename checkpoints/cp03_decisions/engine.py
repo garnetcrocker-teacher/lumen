@@ -257,6 +257,23 @@ def draw_ring(surface, pos, radius, color=(90, 170, 200), width=2):
     pygame.draw.circle(surface, color, (int(pos[0]), int(pos[1])), max(1, int(radius)), width)
 
 
+def draw_creature(surface, pos, facing=1):
+    """Draw one creature at the screen position pos. facing is 1 if it is
+    swimming right and -1 if it is swimming left. Creatures off the edge of
+    the window are skipped for you. Drawn on the world surface, so the dark
+    hides it until your light (or the daylight near the surface) finds it."""
+    x, y = int(pos[0]), int(pos[1])
+    if not (-60 <= x <= WIDTH + 60 and -60 <= y <= HEIGHT + 60):
+        return
+    side = 1 if facing >= 0 else -1
+    body = (70, 170, 150)
+    draw_glow(surface, (x, y), 17, (40, 130, 110))
+    pygame.draw.ellipse(surface, body, (x - 16, y - 8, 32, 16))
+    pygame.draw.polygon(surface, body, [(x - 14 * side, y), (x - 26 * side, y - 8),
+                                        (x - 26 * side, y + 8)])
+    pygame.draw.circle(surface, (225, 250, 240), (x + 8 * side, y - 2), 3)
+
+
 def _hud_surface():
     if _state.hud_surface is None:
         _state.hud_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
