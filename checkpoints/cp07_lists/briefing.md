@@ -5,6 +5,8 @@
 
 ---
 
+> **Heads up:** this checkpoint is a little longer and more involved than usual. You write six functions instead of the usual three or four, so start early and don't save it for the last day.
+
 ## The story so far
 
 You're not alone down here. This week the ocean gets creatures, and one list holds all of them.
