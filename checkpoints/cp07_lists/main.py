@@ -65,10 +65,10 @@ DIVE_LOG_PATH = "dive_log.csv"
 DIVE_LOG_HEADER = "pilot,depth,outcome"
 BEST_PATH = "best_dive.txt"
 
-CREATURE_TARGET = 8              # how many creatures the game keeps near you
+CREATURE_TARGET = 6              # how many creatures the game keeps near you
 SPAWN_MIN_DX = 130.0             # new creatures start this far to the side (meters)...
 SPAWN_MAX_DX = 240.0             # ...up to this far
-SPAWN_DEPTH_SPREAD = 100.0       # and up to this far above or below you (meters)
+SPAWN_DEPTH_SPREAD = 120.0       # and up to this far above or below you (meters)
 MIN_CREATURE_DEPTH = 30.0        # but never shallower than this
 MAX_CREATURE_SPEED = 6.0         # meters per second, either direction
 CULL_DISTANCE = 300.0            # creatures farther than this are dropped (meters)

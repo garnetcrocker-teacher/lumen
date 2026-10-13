@@ -526,22 +526,29 @@ writing signatures.
 
 A creature is a `(x, depth, speed)` tuple in one provided list. Tuples are
 immutable, which is the point: `update_creatures` can't do `c[0] += ...`, so
-students loop by index and store a rebuilt tuple back. The roadmap stays the
-same: dicts at cp09, a `Creature` class at cp10.
+students loop by index and store a rebuilt tuple back. Roadmap for the same
+creatures: cp09 turns each tuple into a dict with a `kind`, so a lookup picks
+its appearance and sonar reading; cp10 makes `Creature` a class with its own
+`update`/`draw`/`distance_to`; cp11 adds subclasses (Jellyfish, Anglerfish,
+Leviathan) that override `draw` and `update`. Every creature currently looks the
+same because `engine.draw_creature(surface, pos, facing)` has one appearance;
+it will gain a `kind` or style argument when cp09/cp10 need it.
 
 The world is endless, so there is no fixed population. Provided `frame()` keeps
 a crowd of `CREATURE_TARGET` near the sub: update, cull the far ones, top up
 with new spawns. New creatures start `SPAWN_MIN_DX` to `SPAWN_MAX_DX` meters to
 the side. The window is 240 m wide (`WIDTH / PIXELS_PER_METER`), so 130 m is
 just off screen and nothing pops in. `CULL_DISTANCE` (300 m) is larger than the
-farthest possible spawn (about 260 m), so a new creature is never culled the
+farthest possible spawn (about 270 m), so a new creature is never culled the
 frame it appears. Sonar range is `SONAR_RANGE_MAX / PIXELS_PER_METER` = 120 m,
-the same circle cp04's rings draw. The light is about 39 m. Measured over a
-60 s scripted flight with 8 creatures: about 89% of frames have a sonar contact
-and about 22% have a creature inside the light. Crowd size barely moves those
-numbers (5 creatures gave 78% and 25%), because everything lives in a
-600 x 200 m box around the sub. That is deliberately lively, so students testing
-their code see something quickly.
+the same circle cp04's rings draw. The light is about 39 m. Density was dialed
+back after playtesting: first draft was 8 creatures within 100 m of the sub's
+depth, now 6 within 120 m. Measured over a 5 minute scripted flight, that
+dropped sonar contacts from 47% to 32% of frames and a creature inside the
+light from 25% to 17%. Changing the count alone barely moves those numbers
+(everything lives in a 600 x 240 m box around the sub), so the depth spread
+moved too. Still lively enough that students testing their code see something
+within a few seconds.
 
 No function here is a manufactured split. `distance_to_creature` is called by
 both `cull_creatures` and `sonar_contacts`, and it is the cp05 Pythagorean

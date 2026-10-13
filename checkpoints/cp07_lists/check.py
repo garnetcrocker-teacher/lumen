@@ -54,7 +54,7 @@ def main():
 
     min_dx = getattr(student, "SPAWN_MIN_DX", 130.0)
     max_dx = getattr(student, "SPAWN_MAX_DX", 240.0)
-    spread = getattr(student, "SPAWN_DEPTH_SPREAD", 100.0)
+    spread = getattr(student, "SPAWN_DEPTH_SPREAD", 120.0)
     min_depth = getattr(student, "MIN_CREATURE_DEPTH", 30.0)
     max_speed = getattr(student, "MAX_CREATURE_SPEED", 6.0)
     cull_limit = getattr(student, "CULL_DISTANCE", 300.0)
