@@ -96,6 +96,13 @@ def load_dive_stats(path=DIVE_LOG_PATH):
     and maximum as you go, then divide the total by the count for the
     average.
 
+    Heads up: this uses two things the course hasn't covered yet. The
+    string method split() is Chapter 8 and lists are Chapter 7, so
+    here is all you need. "Nova,150.0,SURVIVED".split(",") returns a
+    list of the three pieces: "Nova", "150.0", and "SURVIVED". Put a
+    position in square brackets after a list to get one piece, and
+    count from 0, so [1] is the second piece, the depth.
+
     A row's depth field might not convert to a float (a hand-edited or
     corrupted line). Wrap that conversion in its own try/except
     ValueError and skip the row instead of letting it crash the whole
@@ -119,7 +126,9 @@ def save_best_dive(pilot, depth, alive, path=BEST_PATH):
 
     Try to open and read `path` first, the same way load_dive_stats
     handles a file that might not exist yet, and pull the existing
-    record's depth back out of it. If the file didn't exist, or this
+    record's depth back out of it (the split() note in load_dive_stats
+    applies here too: "Depth: 300.0 m".split() with nothing in the
+    parentheses splits on spaces). If the file didn't exist, or this
     dive is alive and deeper than that depth, write the two lines above
     to `path` in write mode ("w") for the new pilot and depth.
     Otherwise leave the file alone.

@@ -79,6 +79,13 @@ field, and convert it to a `float`.
 Track a running count, a running total, and a running minimum and
 maximum as you go, then divide the total by the count for the average.
 
+**Heads up: this uses two things the course hasn't covered yet.** The
+string method `split()` is Chapter 8, and lists are Chapter 7. Here is
+all you need. `"Nova,150.0,SURVIVED".split(",")` returns a list of the
+three pieces: `"Nova"`, `"150.0"`, and `"SURVIVED"`. Put a position in
+square brackets after a list to get one piece, counting from 0, so `[1]`
+is the second piece, the depth.
+
 A row's depth field might not convert to a `float` (a hand-edited or
 corrupted line). Wrap that conversion in its own `try`/`except
 ValueError` and skip the row instead of letting it crash the whole
@@ -106,7 +113,9 @@ deep it went.
 
 Try to open and read `path` first, the same way `load_dive_stats`
 handles a file that might not exist yet, and pull the existing
-record's depth back out of it. If the file didn't exist, or this dive
+record's depth back out of it. The `split()` note above applies here
+too: `"Depth: 300.0 m".split()` with nothing in the parentheses splits on
+spaces. If the file didn't exist, or this dive
 is alive *and* deeper than that depth, write the two lines above to
 `path` in write mode (`"w"`) for the new pilot and depth. Otherwise
 leave the file alone.
@@ -160,10 +169,6 @@ uses.
   write before it ever opens the file in write mode.
 - `with open(...) as f:` closes the file automatically, no `f.close()`
   needed.
-- `line.split(",")` returns a list of the pieces, and you pick one by its
-  position, counting from 0. `"Nova,150.0,SURVIVED".split(",")` gives
-  three pieces, so `[1]` is the depth. Lists get a full lesson next
-  week; this is all you need for now.
 - Convert the depth field with `float()` before comparing it to
   anything, or you'll be comparing text instead of numbers.
 - `float()` raises `ValueError` on a field that isn't a number.
