@@ -160,6 +160,10 @@ uses.
   write before it ever opens the file in write mode.
 - `with open(...) as f:` closes the file automatically, no `f.close()`
   needed.
+- `line.split(",")` returns a list of the pieces, and you pick one by its
+  position, counting from 0. `"Nova,150.0,SURVIVED".split(",")` gives
+  three pieces, so `[1]` is the depth. Lists get a full lesson next
+  week; this is all you need for now.
 - Convert the depth field with `float()` before comparing it to
   anything, or you'll be comparing text instead of numbers.
 - `float()` raises `ValueError` on a field that isn't a number.
