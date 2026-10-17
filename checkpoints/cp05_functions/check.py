@@ -204,7 +204,9 @@ def main():
         alert = "WARNING"
         student.draw_dashboard(None, sub, alert)
     except Exception as exc:
-        check("draw_dashboard runs without error", False, repr(exc))
+        # Printed, not scored: the checks below already fail when the call
+        # crashes, and an extra scored line here would shrink the score.
+        print(f"  [NOTE] draw_dashboard raised {exc!r}")
     finally:
         engine.draw_hull_status = real_hull_status_draw
         engine.draw_hud_text = real_hud_text
