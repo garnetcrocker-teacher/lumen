@@ -21,7 +21,10 @@ to survive that.
 Already wired up outside the YOUR CODE section: load_dive_stats() runs
 at the top of the pre-dive intake, and save_dive_log()/save_best_dive()
 both run right after engine.run() returns, using the sub it hands back.
-You don't need to add either call yourself.
+You don't need to add either call yourself. These lines sit inside the
+Checkpoint 2 intake at the bottom of the file and are marked NEW IN
+CHECKPOINT 6. If you paste your own Checkpoint 2 code over that section,
+keep them.
 
 Checkpoints 2 through 5 are carried into the bottom of this file as
 reference versions: Checkpoint 5's four functions (format_distance,
@@ -311,19 +314,27 @@ def overall_alert(hull_label, oxygen_label):
 # ============ CHECKPOINT 2 (carried over) - reference version ==============
 #  Your pre-dive intake from Checkpoint 2. Working reference version, so the
 #  game runs - replace it with your own if you have it.
+#
+#  If you paste in your own, KEEP the lines marked NEW IN CHECKPOINT 6 below.
+#  They are not part of Checkpoint 2. Without them, no dives are logged and
+#  the stats line never prints.
 # =============================================================================
 if __name__ == "__main__":
+    # >>> NEW IN CHECKPOINT 6: keep this line >>>
     count, average, minimum, maximum = load_dive_stats()
+    # <<< end new line <<<
 
     print("=" * 40)
     print("        LUMEN  -  PRE-DIVE INTAKE")
     print("=" * 40)
+    # >>> NEW IN CHECKPOINT 6: keep this stats block >>>
     if count > 0:
         print(f"{count} dive(s) logged - best {maximum:.1f} m, "
               f"average {average:.1f} m, shallowest {minimum:.1f} m.")
     else:
         print("No dives logged yet - this will be the first.")
     print()
+    # <<< end new block <<<
 
     pilot = input("Pilot name: ")
     target_depth = read_valid_depth()
@@ -345,5 +356,7 @@ if __name__ == "__main__":
     print()
     countdown_to_dive(DIVE_COUNTDOWN)
     sub = engine.run(frame)      # launch the dive with the plan you just entered
+    # >>> NEW IN CHECKPOINT 6: keep these two lines >>>
     save_dive_log(pilot, sub.depth, sub.alive)
     save_best_dive(pilot, sub.depth, sub.alive)
+    # <<< end new lines <<<

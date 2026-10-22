@@ -46,11 +46,20 @@ line.
 > and **Checkpoint 2 (carried over)** the same way. If you did those
 > checkpoints, paste your own versions in over the references.
 >
-> Also already wired up for you, outside the YOUR CODE section:
-> `load_dive_stats()` is called at the top of the pre-dive intake, and
-> `save_dive_log()`/`save_best_dive()` are both called right after
-> `engine.run()` returns, using the `sub` it hands back. You don't need
-> to add either call yourself.
+> **Keep the new lines in the Checkpoint 2 section.** The Checkpoint 2
+> intake at the bottom of `main.py` has three pieces that are new this
+> week and not part of your Checkpoint 2 code. Each is marked `NEW IN
+> CHECKPOINT 6`:
+>
+> - `load_dive_stats()` is called at the top, before the banner.
+> - The `if count > 0:` block that prints your dive history sits right
+>   after the banner.
+> - `save_dive_log()` and `save_best_dive()` are called right after
+>   `engine.run()` returns, using the `sub` it hands back.
+>
+> If you paste your own Checkpoint 2 code over that section, copy these
+> three pieces back in. If you drop them, the game still runs but no
+> dives are ever logged. You don't need to write them yourself.
 
 ### 1. `save_dive_log(pilot, depth, alive, path=DIVE_LOG_PATH)` - void
 
